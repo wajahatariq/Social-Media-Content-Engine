@@ -3,71 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Techware Hub | Auto-Pilot</title>
+    <title>Kinetix | Intelligent Content Engine</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <h1>🚀 Techware Hub <span class="highlight">Auto-Pilot</span></h1>
-            <p>AI Agentic Research & Content Strategy Portal</p>
+            <div class="brand">
+                <i class="ph-fill ph-circles-three-plus"></i>
+                <h1>KINETIX</h1>
+            </div>
+            <p>Autonomous Content & Research Engine</p>
         </header>
 
         <div class="main-grid">
             
             <div class="card form-card">
-                <h2>✨ Client Intake</h2>
+                <div class="card-header">
+                    <i class="ph ph-sliders-horizontal"></i>
+                    <h2>Configuration</h2>
+                </div>
+                
                 <form id="agentForm">
                     <div class="form-group">
-                        <label>Client Name</label>
-                        <input type="text" id="clientName" placeholder="e.g. ICM Accountancy" required>
+                        <label>Brand Identity</label>
+                        <input type="text" id="clientName" placeholder="Brand Name" required>
                     </div>
 
                     <div class="form-group">
-                        <label>Industry</label>
-                        <input type="text" id="industry" placeholder="e.g. UK Tax Law" required>
+                        <label>Target Sector</label>
+                        <input type="text" id="industry" placeholder="Industry / Niche" required>
                     </div>
 
                     <div class="form-group">
-                        <label>Website URL</label>
-                        <input type="url" id="websiteUrl" placeholder="https://..." required>
+                        <label>Digital Presence</label>
+                        <input type="url" id="websiteUrl" placeholder="Website URL" required>
                     </div>
 
                     <div class="form-group">
-                        <label>Strategy Focus</label>
-                        <textarea id="notes" placeholder="Focus on 2026 tax updates..."></textarea>
+                        <label>Strategic Directive</label>
+                        <textarea id="notes" placeholder="Define campaign goals or tonal preferences..."></textarea>
                     </div>
 
-                    <button type="submit" id="submitBtn">Start Research Agent</button>
+                    <button type="submit" id="submitBtn">
+                        Initialize Agent
+                        <i class="ph-bold ph-arrow-right"></i>
+                    </button>
                 </form>
             </div>
 
             <div class="results-area">
                 
-                <div id="loading" class="hidden">
-                    <div class="spinner"></div>
-                    <h3>Agent is Researching...</h3>
-                    <p>Scanning news and trends</p>
+                <div id="loading" class="hidden state-box">
+                    <div class="loader"></div>
+                    <h3>Processing Data</h3>
+                    <p>Analyzing market trends and competitor signals...</p>
                 </div>
 
-                <div id="emptyState" class="empty-state">
-                    <div class="icon-box">📊</div>
-                    <h3>Ready to Generate</h3>
-                    <p>Enter details to start the AI agent.</p>
+                <div id="emptyState" class="empty-state state-box">
+                    <i class="ph ph-cpu"></i>
+                    <h3>System Ready</h3>
+                    <p>Awaiting configuration inputs to generate content protocols.</p>
                 </div>
 
                 <div id="contentDisplay" class="hidden">
                     <div class="strategy-banner">
-                        <h2 id="strategyTitle">Strategy Focus</h2>
-                        <p id="strategySubtitle">Generated for Client</p>
+                        <div class="banner-content">
+                            <span class="badge">Active Protocol</span>
+                            <h2 id="strategyTitle">Strategy Focus</h2>
+                            <p id="strategySubtitle">Generated for Client</p>
+                        </div>
                     </div>
                     <div id="cardsContainer" class="cards-grid">
                         </div>
                 </div>
 
-                <div id="errorMessage" class="error-msg hidden"></div>
+                <div id="errorMessage" class="error-msg hidden">
+                    <i class="ph-bold ph-warning-circle"></i>
+                    <span id="errorText"></span>
+                </div>
 
             </div>
         </div>
