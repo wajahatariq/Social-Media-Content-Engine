@@ -2,6 +2,7 @@
   "version": 2,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/Backend/app/main.py" },
+    { "source": "/", "destination": "/Frontend/index.html" }, 
     { "source": "/(.*)", "destination": "/Frontend/$1" }
   ],
   "builds": [
