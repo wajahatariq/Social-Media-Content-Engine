@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000/api/generate";
+const API_URL = "www.socialmediacontentengine.vercel.app";
 
 const form = document.getElementById('agentForm');
 const submitBtn = document.getElementById('submitBtn');
@@ -90,4 +90,5 @@ function showError(msg) {
     errorDiv.classList.remove('hidden');
     submitBtn.disabled = false;
     submitBtn.textContent = "Start Research Agent";
+
 }
