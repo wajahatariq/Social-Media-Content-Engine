@@ -1,5 +1,4 @@
 const API_URL = "www.socialmediacontentengine.vercel.app";
-
 const form = document.getElementById('agentForm');
 const submitBtn = document.getElementById('submitBtn');
 const loadingDiv = document.getElementById('loading');
@@ -7,6 +6,7 @@ const emptyState = document.getElementById('emptyState');
 const contentDisplay = document.getElementById('contentDisplay');
 const cardsContainer = document.getElementById('cardsContainer');
 const errorDiv = document.getElementById('errorMessage');
+const errorText = document.getElementById('errorText');
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -23,14 +23,13 @@ form.addEventListener('submit', async (e) => {
     showLoading();
 
     try {
-        // 3. Send to Python Backend
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
         });
 
-        if (!response.ok) throw new Error("Backend connection failed");
+        if (!response.ok) throw new Error("Server communication failed.");
 
         const result = await response.json();
         
@@ -38,36 +37,38 @@ form.addEventListener('submit', async (e) => {
         renderCalendar(result.data);
 
     } catch (error) {
-        showError("Agent failed. Is the Python backend running on port 8000?");
+        showError("System Error: Ensure Backend is active on Port 8000.");
         console.error(error);
     }
 });
 
 function renderCalendar(data) {
-    // Hide loading
     loadingDiv.classList.add('hidden');
     emptyState.classList.add('hidden');
     contentDisplay.classList.remove('hidden');
 
-    // Set Header
     document.getElementById('strategyTitle').textContent = data.week_focus;
-    document.getElementById('strategySubtitle').textContent = `Strategy for ${data.client_name}`;
+    document.getElementById('strategySubtitle').textContent = `Target Protocol: ${data.client_name}`;
 
-    // Clear previous cards
     cardsContainer.innerHTML = '';
 
-    // Create Cards
     data.cards.forEach(card => {
+        // No emojis here. Using clean HTML structure.
         const cardHTML = `
             <div class="result-card">
                 <span class="day-badge">${card.day}</span>
                 <h3>${card.topic}</h3>
-                <p style="background:#f1f5f9; padding:10px; border-radius:8px; margin:10px 0; font-family:monospace; font-size:0.9em;">
+                
+                <div class="caption-box">
                     ${card.caption}
-                </p>
+                </div>
+                
                 <div class="visual-prompt">
-                    <span class="visual-label">AI Image Prompt</span>
-                    "${card.visual_idea}"
+                    <i class="ph-bold ph-image"></i>
+                    <div>
+                        <span class="visual-label">Generative Prompt</span>
+                        <span class="visual-text">"${card.visual_idea}"</span>
+                    </div>
                 </div>
             </div>
         `;
@@ -80,15 +81,17 @@ function showLoading() {
     contentDisplay.classList.add('hidden');
     emptyState.classList.add('hidden');
     loadingDiv.classList.remove('hidden');
+    
+    // Disable button with a tech-style text
     submitBtn.disabled = true;
-    submitBtn.textContent = "Agent Working...";
+    submitBtn.innerHTML = `Running Protocol <div class="loader" style="width:15px; height:15px; border-width:2px; display:inline-block; margin-bottom:0; vertical-align:middle; margin-left:5px;"></div>`;
 }
 
 function showError(msg) {
     loadingDiv.classList.add('hidden');
-    errorDiv.textContent = msg;
     errorDiv.classList.remove('hidden');
+    errorText.textContent = msg;
+    
     submitBtn.disabled = false;
-    submitBtn.textContent = "Start Research Agent";
-
+    submitBtn.innerHTML = `Initialize Agent <i class="ph-bold ph-arrow-right"></i>`;
 }
