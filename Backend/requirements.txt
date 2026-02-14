@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+motor
+langchain
+langchain-groq
+langchain-community
+langgraph
+tavily-python
+python-dotenv
+mangum
