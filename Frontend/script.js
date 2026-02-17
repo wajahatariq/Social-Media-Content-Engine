@@ -1,4 +1,4 @@
-const API_URL = "www.socialmediacontentengine.vercel.app";
+const API_URL = "https://socialmediacontentengine.vercel.app/api/generate";
 const form = document.getElementById('agentForm');
 const submitBtn = document.getElementById('submitBtn');
 const loadingDiv = document.getElementById('loading');
@@ -95,3 +95,4 @@ function showError(msg) {
     submitBtn.disabled = false;
     submitBtn.innerHTML = `Initialize Agent <i class="ph-bold ph-arrow-right"></i>`;
 }
+
