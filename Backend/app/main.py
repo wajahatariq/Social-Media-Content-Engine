@@ -1,8 +1,7 @@
-# Backend/app/main.py
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List  # <--- Make sure this is imported
-from .models import Brand, WeeklyPlan, SocialPost
+from typing import List
+from .models import Brand, SocialPost
 from .database import db, get_db_status
 from .agent import run_content_agent
 from bson import ObjectId
@@ -11,7 +10,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Kinetix Brand Engine")
+app = FastAPI(title="Kinetix Pro")
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,66 +20,58 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def root():
-    return {"status": "Online", "db": await get_db_status()}
-
-# --- BRAND MANAGEMENT ---
-
+# --- BRANDS ---
 @app.post("/api/brands")
 async def create_brand(brand: Brand):
-    # We exclude 'id' because MongoDB generates it automatically
-    brand_data = brand.model_dump(by_alias=True, exclude=["id"])
-    new_brand = await db.brands.insert_one(brand_data)
-    return {"id": str(new_brand.inserted_id), "name": brand.name}
+    res = await db.brands.insert_one(brand.model_dump(by_alias=True, exclude=["id"]))
+    return {"id": str(res.inserted_id), "name": brand.name}
 
-# --- FIX IS HERE: Added response_model=List[Brand] ---
-@app.get("/api/brands", response_model=List[Brand]) 
+@app.get("/api/brands", response_model=List[Brand])
 async def get_brands():
-    brands = await db.brands.find().to_list(100)
-    return brands
+    return await db.brands.find().to_list(100)
 
-# --- FIX IS HERE: Added response_model=List[SocialPost] ---
+# --- POSTS ---
 @app.get("/api/brands/{brand_id}/posts", response_model=List[SocialPost])
-async def get_brand_posts(brand_id: str):
-    posts = await db.posts.find({"brand_id": brand_id}).sort("created_at", -1).to_list(100)
-    return posts
+async def get_posts(brand_id: str):
+    return await db.posts.find({"brand_id": brand_id}).to_list(1000)
 
-# --- CONTENT GENERATION ---
+@app.post("/api/posts/plan")
+async def plan_post(post: SocialPost):
+    """Step 1: Save a slot on the calendar (Topic + Date only)"""
+    post.status = "Planned"
+    res = await db.posts.insert_one(post.model_dump(by_alias=True, exclude=["id"]))
+    return {"id": str(res.inserted_id), "status": "Planned"}
 
-@app.post("/api/schedule")
-async def schedule_week(plan: WeeklyPlan):
+@app.post("/api/posts/{post_id}/generate")
+async def generate_single_post(post_id: str):
+    """Step 2: Run AI for this specific slot"""
     try:
-        brand = await db.brands.find_one({"_id": ObjectId(plan.brand_id)})
-        if not brand:
-            raise HTTPException(status_code=404, detail="Brand not found")
-
+        # 1. Get the planned post
+        post = await db.posts.find_one({"_id": ObjectId(post_id)})
+        brand = await db.brands.find_one({"_id": ObjectId(post['brand_id'])})
+        
+        # 2. Run Agent (Targeted for this single topic)
         agent_input = {
             "client_name": brand['name'],
             "industry": brand['industry'],
-            "topics": plan.topics
+            "topics": [post['topic']] # <--- Only research this one topic
         }
-        
         generated = await run_content_agent(agent_input)
         
         if "error" in generated:
-            raise HTTPException(status_code=500, detail="AI Generation Failed")
+            raise HTTPException(500, "AI Generation Failed")
 
-        new_posts_ids = []
-        for card in generated.get('cards', []):
-            post = SocialPost(
-                brand_id=plan.brand_id,
-                day=card.get('day', 'Unscheduled'),
-                topic=card.get('topic', 'General'),
-                caption=card.get('caption', ''),
-                visual_idea=card.get('visual_idea', '')
-            )
-            # Save to DB
-            result = await db.posts.insert_one(post.model_dump(by_alias=True, exclude=["id"]))
-            new_posts_ids.append(str(result.inserted_id))
-
-        return {"status": "Success", "generated_count": len(new_posts_ids)}
+        # 3. Update the DB with the result
+        card = generated['cards'][0]
+        update_data = {
+            "caption": card['caption'],
+            "visual_idea": card['visual_idea'],
+            "status": "Generated"
+        }
+        
+        await db.posts.update_one({"_id": ObjectId(post_id)}, {"$set": update_data})
+        return {**post, **update_data, "id": post_id, "_id": str(post["_id"])} # Return full updated obj
 
     except Exception as e:
         logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(500, str(e))
