@@ -3,76 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kinetix | Brand Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Kinetix | Social Command</title>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <div class="brand" onclick="showDashboard()">
+    <div class="app-layout">
+        
+        <aside class="sidebar">
+            <div class="logo-area">
                 <i class="ph-fill ph-circles-three-plus"></i>
-                <h1>KINETIX</h1>
+                <span>KINETIX</span>
             </div>
-            <button id="addBrandBtn" class="btn-small" onclick="toggleBrandModal()">
-                <i class="ph-bold ph-plus"></i> New Brand
+            
+            <div class="nav-label">YOUR BRANDS</div>
+            <div id="brandList" class="brand-nav">
+                </div>
+
+            <button class="new-brand-btn" onclick="toggleBrandModal()">
+                <i class="ph-bold ph-plus"></i> Add Brand
             </button>
-        </header>
+        </aside>
 
-        <div id="dashboardView">
-            <h2 class="section-title">Active Brands</h2>
-            <div id="brandGrid" class="brand-grid">
+        <main class="main-content">
+            <header class="top-bar">
+                <div id="activeBrandHeader">
+                    <h2>Select a Brand</h2>
+                    <p>Select a brand from the sidebar to view calendar.</p>
                 </div>
-            <div id="loadingBrands" class="loader-center hidden">
-                <div class="loader"></div>
-            </div>
-        </div>
+                <div id="actions" class="hidden">
+                    <button class="btn-primary" onclick="openPlanModal()">
+                        <i class="ph-bold ph-plus"></i> Plan Post
+                    </button>
+                </div>
+            </header>
 
-        <div id="brandDetailView" class="hidden">
-            <div class="brand-header">
-                <div>
-                    <button class="back-btn" onclick="showDashboard()"><i class="ph-bold ph-arrow-left"></i> Back</button>
-                    <h2 id="currentBrandName">Brand Name</h2>
-                    <span id="currentBrandIndustry" class="badge">Industry</span>
-                </div>
-                <button class="btn-primary" onclick="toggleScheduleModal()">
-                    <i class="ph-bold ph-calendar-plus"></i> Schedule New Week
-                </button>
+            <div id="calendarWrapper" class="calendar-container hidden">
+                <div id='calendar'></div>
             </div>
 
-            <div id="postsContainer" class="posts-grid">
-                </div>
-        </div>
-
+            <div id="emptyState" class="empty-state">
+                <i class="ph-duotone ph-arrow-bend-up-left"></i>
+                <h3>No Brand Selected</h3>
+                <p>Choose a brand to manage content.</p>
+            </div>
+        </main>
     </div>
 
     <div id="brandModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Add New Brand</h3>
-            <input type="text" id="newBrandName" placeholder="Brand Name (e.g., Nike)">
-            <input type="text" id="newBrandIndustry" placeholder="Industry (e.g., Sportswear)">
-            <input type="text" id="newBrandWebsite" placeholder="Website URL">
-            <div class="modal-actions">
+        <div class="modal-box">
+            <h3>New Brand Workspace</h3>
+            <input type="text" id="newBrandName" placeholder="Brand Name">
+            <input type="text" id="newBrandIndustry" placeholder="Industry">
+            <input type="text" id="newBrandWebsite" placeholder="Website">
+            <div class="modal-footer">
                 <button onclick="toggleBrandModal()">Cancel</button>
-                <button class="btn-primary" onclick="createBrand()">Create Brand</button>
+                <button class="btn-primary" onclick="createBrand()">Create</button>
             </div>
         </div>
     </div>
 
-    <div id="scheduleModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Schedule Content</h3>
-            <p>Enter topics for this week's posts (comma separated).</p>
-            <input type="text" id="weekFocus" placeholder="Week Theme (e.g., Black Friday Sale)">
-            <textarea id="weekTopics" placeholder="Topic 1: Sneaker launch&#10;Topic 2: Runner interview&#10;Topic 3: Discount code"></textarea>
-            <small>Tip: The AI will generate one post per line/topic.</small>
+    <div id="planModal" class="modal hidden">
+        <div class="modal-box">
+            <h3>Plan Content Slot</h3>
+            <label>Topic / Focus</label>
+            <input type="text" id="planTopic" placeholder="e.g., Summer Sale Announcement">
             
-            <div class="modal-actions">
-                <button onclick="toggleScheduleModal()">Cancel</button>
-                <button id="generateBtn" class="btn-primary" onclick="generateSchedule()">
-                    Generate Content <i class="ph-bold ph-sparkle"></i>
+            <label>Date & Time</label>
+            <input type="datetime-local" id="planDate">
+            
+            <div class="modal-footer">
+                <button onclick="togglePlanModal()">Cancel</button>
+                <button class="btn-primary" onclick="savePlan()">Save Slot</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewModal" class="modal hidden">
+        <div class="modal-box large">
+            <div class="badge-row">
+                <span id="viewStatus" class="status-badge">PLANNED</span>
+                <span id="viewDate" class="date-badge"></span>
+            </div>
+            
+            <h2 id="viewTopic">Topic Name</h2>
+            
+            <div id="aiContent" class="ai-box hidden">
+                <label>Caption</label>
+                <div id="viewCaption" class="text-block"></div>
+                <label>Visual Direction</label>
+                <div id="viewVisual" class="visual-block"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button onclick="closeViewModal()">Close</button>
+                <button id="btnGenerate" class="btn-magic" onclick="runGenerator()">
+                    <i class="ph-bold ph-sparkle"></i> Generate with AI
                 </button>
             </div>
         </div>
