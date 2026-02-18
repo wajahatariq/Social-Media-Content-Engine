@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware  # <--- IMPORT THIS
-from app.models import ClientInput
-from app.database import calendars_collection, get_db_status
-from app.agent import run_content_agent
+from .models import ClientInput
+from .database import calendars_collection, get_db_status
+from .agent import run_content_agent
 import logging
 
 # Logger setup
@@ -59,4 +59,5 @@ async def generate_content(client: ClientInput):
 
     except Exception as e:
         logger.error(f"Error: {e}")
+
         raise HTTPException(status_code=500, detail=str(e))
