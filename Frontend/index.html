@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kinetix | Intelligent Content Engine</title>
+    <title>Kinetix | Brand Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -12,80 +12,68 @@
 
     <div class="container">
         <header>
-            <div class="brand">
+            <div class="brand" onclick="showDashboard()">
                 <i class="ph-fill ph-circles-three-plus"></i>
                 <h1>KINETIX</h1>
             </div>
-            <p>Autonomous Content & Research Engine</p>
+            <button id="addBrandBtn" class="btn-small" onclick="toggleBrandModal()">
+                <i class="ph-bold ph-plus"></i> New Brand
+            </button>
         </header>
 
-        <div class="main-grid">
-            
-            <div class="card form-card">
-                <div class="card-header">
-                    <i class="ph ph-sliders-horizontal"></i>
-                    <h2>Configuration</h2>
+        <div id="dashboardView">
+            <h2 class="section-title">Active Brands</h2>
+            <div id="brandGrid" class="brand-grid">
                 </div>
-                
-                <form id="agentForm">
-                    <div class="form-group">
-                        <label>Brand Identity</label>
-                        <input type="text" id="clientName" placeholder="Brand Name" required>
-                    </div>
+            <div id="loadingBrands" class="loader-center hidden">
+                <div class="loader"></div>
+            </div>
+        </div>
 
-                    <div class="form-group">
-                        <label>Target Sector</label>
-                        <input type="text" id="industry" placeholder="Industry / Niche" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Digital Presence</label>
-                        <input type="url" id="websiteUrl" placeholder="Website URL" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Strategic Directive</label>
-                        <textarea id="notes" placeholder="Define campaign goals or tonal preferences..."></textarea>
-                    </div>
-
-                    <button type="submit" id="submitBtn">
-                        Initialize Agent
-                        <i class="ph-bold ph-arrow-right"></i>
-                    </button>
-                </form>
+        <div id="brandDetailView" class="hidden">
+            <div class="brand-header">
+                <div>
+                    <button class="back-btn" onclick="showDashboard()"><i class="ph-bold ph-arrow-left"></i> Back</button>
+                    <h2 id="currentBrandName">Brand Name</h2>
+                    <span id="currentBrandIndustry" class="badge">Industry</span>
+                </div>
+                <button class="btn-primary" onclick="toggleScheduleModal()">
+                    <i class="ph-bold ph-calendar-plus"></i> Schedule New Week
+                </button>
             </div>
 
-            <div class="results-area">
-                
-                <div id="loading" class="hidden state-box">
-                    <div class="loader"></div>
-                    <h3>Processing Data</h3>
-                    <p>Analyzing market trends and competitor signals...</p>
+            <div id="postsContainer" class="posts-grid">
                 </div>
+        </div>
 
-                <div id="emptyState" class="empty-state state-box">
-                    <i class="ph ph-cpu"></i>
-                    <h3>System Ready</h3>
-                    <p>Awaiting configuration inputs to generate content protocols.</p>
-                </div>
+    </div>
 
-                <div id="contentDisplay" class="hidden">
-                    <div class="strategy-banner">
-                        <div class="banner-content">
-                            <span class="badge">Active Protocol</span>
-                            <h2 id="strategyTitle">Strategy Focus</h2>
-                            <p id="strategySubtitle">Generated for Client</p>
-                        </div>
-                    </div>
-                    <div id="cardsContainer" class="cards-grid">
-                        </div>
-                </div>
+    <div id="brandModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add New Brand</h3>
+            <input type="text" id="newBrandName" placeholder="Brand Name (e.g., Nike)">
+            <input type="text" id="newBrandIndustry" placeholder="Industry (e.g., Sportswear)">
+            <input type="text" id="newBrandWebsite" placeholder="Website URL">
+            <div class="modal-actions">
+                <button onclick="toggleBrandModal()">Cancel</button>
+                <button class="btn-primary" onclick="createBrand()">Create Brand</button>
+            </div>
+        </div>
+    </div>
 
-                <div id="errorMessage" class="error-msg hidden">
-                    <i class="ph-bold ph-warning-circle"></i>
-                    <span id="errorText"></span>
-                </div>
-
+    <div id="scheduleModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Schedule Content</h3>
+            <p>Enter topics for this week's posts (comma separated).</p>
+            <input type="text" id="weekFocus" placeholder="Week Theme (e.g., Black Friday Sale)">
+            <textarea id="weekTopics" placeholder="Topic 1: Sneaker launch&#10;Topic 2: Runner interview&#10;Topic 3: Discount code"></textarea>
+            <small>Tip: The AI will generate one post per line/topic.</small>
+            
+            <div class="modal-actions">
+                <button onclick="toggleScheduleModal()">Cancel</button>
+                <button id="generateBtn" class="btn-primary" onclick="generateSchedule()">
+                    Generate Content <i class="ph-bold ph-sparkle"></i>
+                </button>
             </div>
         </div>
     </div>
