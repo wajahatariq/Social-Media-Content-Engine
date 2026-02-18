@@ -1,169 +1,186 @@
-const API_BASE = "https://socialmediacontentengine.vercel.app/api";
-let currentBrandId = null;
+// UPDATE THIS URL for Production
+const API_BASE = "https://socialmediacontentengine.vercel.app/api"; 
+// const API_BASE = "http://localhost:8000/api"; 
 
-// --- Initialization ---
+let calendar;
+let activeBrandId = null;
+let activePostId = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+    initCalendar();
     loadBrands();
 });
 
-// --- Brand Management ---
-async function loadBrands() {
-    const grid = document.getElementById('brandGrid');
-    grid.innerHTML = '';
-    document.getElementById('loadingBrands').classList.remove('hidden');
+// --- 1. SETUP CALENDAR ---
+function initCalendar() {
+    const calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek'
+        },
+        height: 'auto',
+        events: [], // Will load from DB
+        eventClick: function(info) {
+            openPostDetails(info.event);
+        },
+        dateClick: function(info) {
+            // Pre-fill date when clicking a day
+            document.getElementById('planDate').value = info.dateStr + "T10:00";
+            openPlanModal();
+        }
+    });
+    calendar.render();
+}
 
+// --- 2. BRAND SIDEBAR ---
+async function loadBrands() {
     try {
         const res = await fetch(`${API_BASE}/brands`);
         const brands = await res.json();
-
-        document.getElementById('loadingBrands').classList.add('hidden');
-
-        if (brands.length === 0) {
-            grid.innerHTML = '<p class="empty-text">No brands yet. Create one to get started.</p>';
-            return;
-        }
-
-        brands.forEach(brand => {
-            const card = document.createElement('div');
-            card.className = 'brand-card';
-            card.innerHTML = `
-                <div class="brand-icon">${brand.name.substring(0,2).toUpperCase()}</div>
-                <h3>${brand.name}</h3>
-                <p>${brand.industry}</p>
-            `;
-            card.onclick = () => openBrand(brand);
-            grid.appendChild(card);
+        const list = document.getElementById('brandList');
+        list.innerHTML = '';
+        
+        brands.forEach(b => {
+            const item = document.createElement('div');
+            item.className = 'brand-item';
+            item.innerHTML = `<span class="dot"></span> ${b.name}`;
+            item.onclick = () => selectBrand(b, item);
+            list.appendChild(item);
         });
-    } catch (e) {
-        console.error(e);
-        grid.innerHTML = '<p class="error-text">Failed to load brands.</p>';
-    }
+    } catch(e) { console.error(e); }
 }
 
-async function createBrand() {
-    const name = document.getElementById('newBrandName').value;
-    const industry = document.getElementById('newBrandIndustry').value;
-    const website = document.getElementById('newBrandWebsite').value;
-
-    if (!name || !industry) return alert("Name and Industry are required");
-
-    try {
-        await fetch(`${API_BASE}/brands`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, industry, website })
-        });
-        toggleBrandModal();
-        loadBrands();
-    } catch (e) {
-        alert("Error creating brand");
-    }
-}
-
-// --- Brand Detail View ---
-async function openBrand(brand) {
-    currentBrandId = brand._id; // Store ID for scheduling
+async function selectBrand(brand, el) {
+    activeBrandId = brand._id;
     
     // UI Updates
-    document.getElementById('dashboardView').classList.add('hidden');
-    document.getElementById('brandDetailView').classList.remove('hidden');
-    document.getElementById('currentBrandName').textContent = brand.name;
-    document.getElementById('currentBrandIndustry').textContent = brand.industry;
-
-    loadPosts(brand._id);
+    document.querySelectorAll('.brand-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    
+    document.getElementById('emptyState').classList.add('hidden');
+    document.getElementById('calendarWrapper').classList.remove('hidden');
+    document.getElementById('actions').classList.remove('hidden');
+    
+    document.getElementById('activeBrandHeader').innerHTML = `
+        <h2>${brand.name}</h2>
+        <p>${brand.industry} Protocol Active</p>
+    `;
+    
+    refreshCalendar();
 }
 
-async function loadPosts(brandId) {
-    const container = document.getElementById('postsContainer');
-    container.innerHTML = '<div class="loader"></div>';
-
-    try {
-        const res = await fetch(`${API_BASE}/brands/${brandId}/posts`);
-        const posts = await res.json();
-        
-        container.innerHTML = '';
-        
-        if (posts.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No scheduled content.</p></div>';
-            return;
-        }
-
-        posts.forEach(post => {
-            container.innerHTML += `
-                <div class="post-card">
-                    <div class="post-header">
-                        <span class="post-topic">${post.topic}</span>
-                        <span class="post-status ${post.status.toLowerCase()}">${post.status}</span>
-                    </div>
-                    <div class="post-content">
-                        <p class="caption">${post.caption}</p>
-                    </div>
-                    <div class="post-visual">
-                        <i class="ph-bold ph-image"></i> ${post.visual_idea}
-                    </div>
-                </div>
-            `;
-        });
-    } catch (e) {
-        console.error(e);
-    }
+// --- 3. POSTS & CALENDAR DATA ---
+async function refreshCalendar() {
+    const res = await fetch(`${API_BASE}/brands/${activeBrandId}/posts`);
+    const posts = await res.json();
+    
+    const events = posts.map(p => ({
+        id: p._id,
+        title: p.topic,
+        start: p.scheduled_date,
+        backgroundColor: p.status === 'Generated' ? '#10b981' : '#334155',
+        extendedProps: p
+    }));
+    
+    calendar.removeAllEvents();
+    calendar.addEventSource(events);
 }
 
-function showDashboard() {
-    document.getElementById('brandDetailView').classList.add('hidden');
-    document.getElementById('dashboardView').classList.remove('hidden');
-    currentBrandId = null;
-    loadBrands();
+// --- 4. PLANNING (Step 1) ---
+async function savePlan() {
+    const topic = document.getElementById('planTopic').value;
+    const date = document.getElementById('planDate').value;
+    
+    if(!topic || !date) return alert("Required fields missing");
+
+    await fetch(`${API_BASE}/posts/plan`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            brand_id: activeBrandId,
+            topic: topic,
+            scheduled_date: date
+        })
+    });
+    
+    togglePlanModal();
+    refreshCalendar();
 }
 
-// --- Content Generation ---
-async function generateSchedule() {
-    const btn = document.getElementById('generateBtn');
-    const topicsRaw = document.getElementById('weekTopics').value;
-    const focus = document.getElementById('weekFocus').value;
+// --- 5. GENERATION (Step 2) ---
+function openPostDetails(event) {
+    const p = event.extendedProps;
+    activePostId = p._id; // Fixed: Use _id from props
+    
+    document.getElementById('viewTopic').textContent = p.topic;
+    document.getElementById('viewDate').textContent = new Date(event.start).toLocaleString();
+    
+    const statusBadge = document.getElementById('viewStatus');
+    statusBadge.textContent = p.status;
+    statusBadge.className = `status-badge ${p.status.toLowerCase()}`;
+    
+    const btn = document.getElementById('btnGenerate');
+    const contentBox = document.getElementById('aiContent');
 
-    if (!topicsRaw) return alert("Please enter at least one topic");
-
-    // Convert new lines to array items
-    const topics = topicsRaw.split('\n').filter(t => t.trim() !== '');
-
-    btn.disabled = true;
-    btn.innerHTML = 'Generating... <div class="loader-mini"></div>';
-
-    try {
-        const res = await fetch(`${API_BASE}/schedule`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                brand_id: currentBrandId,
-                week_focus: focus,
-                topics: topics
-            })
-        });
-
-        if (!res.ok) throw new Error("Generation failed");
-
-        toggleScheduleModal();
-        loadPosts(currentBrandId); // Refresh list
-        
-        // Reset form
-        document.getElementById('weekTopics').value = '';
-        document.getElementById('weekFocus').value = '';
-
-    } catch (e) {
-        alert("Failed to generate content. Ensure Backend is running.");
-    } finally {
-        btn.disabled = false;
+    if (p.status === 'Generated') {
+        contentBox.classList.remove('hidden');
+        document.getElementById('viewCaption').innerText = p.caption;
+        document.getElementById('viewVisual').innerText = p.visual_idea;
+        btn.innerHTML = 'Regenerate <i class="ph-bold ph-arrows-clockwise"></i>';
+    } else {
+        contentBox.classList.add('hidden');
         btn.innerHTML = 'Generate Content <i class="ph-bold ph-sparkle"></i>';
     }
+    
+    document.getElementById('viewModal').classList.remove('hidden');
 }
 
-// --- UI Helpers ---
-function toggleBrandModal() {
-    document.getElementById('brandModal').classList.toggle('hidden');
-}
-function toggleScheduleModal() {
-    document.getElementById('scheduleModal').classList.toggle('hidden');
+async function runGenerator() {
+    const btn = document.getElementById('btnGenerate');
+    btn.disabled = true;
+    btn.innerHTML = 'Analyzing Trends... <div class="loader-mini"></div>';
+    
+    try {
+        const res = await fetch(`${API_BASE}/posts/${activePostId}/generate`, {method: 'POST'});
+        if(!res.ok) throw new Error("Generation Failed");
+        
+        const updatedPost = await res.json();
+        
+        // Update UI immediately
+        document.getElementById('viewCaption').innerText = updatedPost.caption;
+        document.getElementById('viewVisual').innerText = updatedPost.visual_idea;
+        document.getElementById('aiContent').classList.remove('hidden');
+        
+        const statusBadge = document.getElementById('viewStatus');
+        statusBadge.textContent = "GENERATED";
+        statusBadge.classList.add('generated');
+        
+        refreshCalendar(); // Update calendar color
+    } catch(e) {
+        alert("Error: " + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Regenerate <i class="ph-bold ph-arrows-clockwise"></i>';
+    }
 }
 
-
+// --- HELPERS ---
+function toggleBrandModal() { document.getElementById('brandModal').classList.toggle('hidden'); }
+function togglePlanModal() { document.getElementById('planModal').classList.toggle('hidden'); }
+function openPlanModal() { document.getElementById('planModal').classList.remove('hidden'); }
+function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); }
+async function createBrand() {
+    const name = document.getElementById('newBrandName').value;
+    const ind = document.getElementById('newBrandIndustry').value;
+    const web = document.getElementById('newBrandWebsite').value;
+    await fetch(`${API_BASE}/brands`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, industry: ind, website: web})
+    });
+    toggleBrandModal();
+    loadBrands();
+}
