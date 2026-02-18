@@ -1,4 +1,4 @@
-const API_BASE = "https://socialmediacontentengine.vercel.app/api/generate";
+const API_BASE = "https://socialmediacontentengine.vercel.app/api";
 let currentBrandId = null;
 
 // --- Initialization ---
@@ -165,4 +165,5 @@ function toggleBrandModal() {
 function toggleScheduleModal() {
     document.getElementById('scheduleModal').classList.toggle('hidden');
 }
+
 
