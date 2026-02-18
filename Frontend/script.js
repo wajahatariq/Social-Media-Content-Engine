@@ -1,98 +1,167 @@
 const API_URL = "https://socialmediacontentengine.vercel.app/api/generate";
-const form = document.getElementById('agentForm');
-const submitBtn = document.getElementById('submitBtn');
-const loadingDiv = document.getElementById('loading');
-const emptyState = document.getElementById('emptyState');
-const contentDisplay = document.getElementById('contentDisplay');
-const cardsContainer = document.getElementById('cardsContainer');
-const errorDiv = document.getElementById('errorMessage');
-const errorText = document.getElementById('errorText');
+let currentBrandId = null;
 
-form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    // 1. Gather Data
-    const formData = {
-        client_name: document.getElementById('clientName').value,
-        industry: document.getElementById('industry').value,
-        website_url: document.getElementById('websiteUrl').value,
-        additional_notes: document.getElementById('notes').value
-    };
-
-    // 2. UI State: Loading
-    showLoading();
-
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
-
-        if (!response.ok) throw new Error("Server communication failed.");
-
-        const result = await response.json();
-        
-        // 4. Render Results
-        renderCalendar(result.data);
-
-    } catch (error) {
-        showError("System Error: Ensure Backend is active on Port 8000.");
-        console.error(error);
-    }
+// --- Initialization ---
+document.addEventListener('DOMContentLoaded', () => {
+    loadBrands();
 });
 
-function renderCalendar(data) {
-    loadingDiv.classList.add('hidden');
-    emptyState.classList.add('hidden');
-    contentDisplay.classList.remove('hidden');
+// --- Brand Management ---
+async function loadBrands() {
+    const grid = document.getElementById('brandGrid');
+    grid.innerHTML = '';
+    document.getElementById('loadingBrands').classList.remove('hidden');
 
-    document.getElementById('strategyTitle').textContent = data.week_focus;
-    document.getElementById('strategySubtitle').textContent = `Target Protocol: ${data.client_name}`;
+    try {
+        const res = await fetch(`${API_BASE}/brands`);
+        const brands = await res.json();
 
-    cardsContainer.innerHTML = '';
+        document.getElementById('loadingBrands').classList.add('hidden');
 
-    data.cards.forEach(card => {
-        // No emojis here. Using clean HTML structure.
-        const cardHTML = `
-            <div class="result-card">
-                <span class="day-badge">${card.day}</span>
-                <h3>${card.topic}</h3>
-                
-                <div class="caption-box">
-                    ${card.caption}
-                </div>
-                
-                <div class="visual-prompt">
-                    <i class="ph-bold ph-image"></i>
-                    <div>
-                        <span class="visual-label">Generative Prompt</span>
-                        <span class="visual-text">"${card.visual_idea}"</span>
+        if (brands.length === 0) {
+            grid.innerHTML = '<p class="empty-text">No brands yet. Create one to get started.</p>';
+            return;
+        }
+
+        brands.forEach(brand => {
+            const card = document.createElement('div');
+            card.className = 'brand-card';
+            card.innerHTML = `
+                <div class="brand-icon">${brand.name.substring(0,2).toUpperCase()}</div>
+                <h3>${brand.name}</h3>
+                <p>${brand.industry}</p>
+            `;
+            card.onclick = () => openBrand(brand);
+            grid.appendChild(card);
+        });
+    } catch (e) {
+        console.error(e);
+        grid.innerHTML = '<p class="error-text">Failed to load brands.</p>';
+    }
+}
+
+async function createBrand() {
+    const name = document.getElementById('newBrandName').value;
+    const industry = document.getElementById('newBrandIndustry').value;
+    const website = document.getElementById('newBrandWebsite').value;
+
+    if (!name || !industry) return alert("Name and Industry are required");
+
+    try {
+        await fetch(`${API_BASE}/brands`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, industry, website })
+        });
+        toggleBrandModal();
+        loadBrands();
+    } catch (e) {
+        alert("Error creating brand");
+    }
+}
+
+// --- Brand Detail View ---
+async function openBrand(brand) {
+    currentBrandId = brand._id; // Store ID for scheduling
+    
+    // UI Updates
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('brandDetailView').classList.remove('hidden');
+    document.getElementById('currentBrandName').textContent = brand.name;
+    document.getElementById('currentBrandIndustry').textContent = brand.industry;
+
+    loadPosts(brand._id);
+}
+
+async function loadPosts(brandId) {
+    const container = document.getElementById('postsContainer');
+    container.innerHTML = '<div class="loader"></div>';
+
+    try {
+        const res = await fetch(`${API_BASE}/brands/${brandId}/posts`);
+        const posts = await res.json();
+        
+        container.innerHTML = '';
+        
+        if (posts.length === 0) {
+            container.innerHTML = '<div class="empty-state"><p>No scheduled content.</p></div>';
+            return;
+        }
+
+        posts.forEach(post => {
+            container.innerHTML += `
+                <div class="post-card">
+                    <div class="post-header">
+                        <span class="post-topic">${post.topic}</span>
+                        <span class="post-status ${post.status.toLowerCase()}">${post.status}</span>
+                    </div>
+                    <div class="post-content">
+                        <p class="caption">${post.caption}</p>
+                    </div>
+                    <div class="post-visual">
+                        <i class="ph-bold ph-image"></i> ${post.visual_idea}
                     </div>
                 </div>
-            </div>
-        `;
-        cardsContainer.innerHTML += cardHTML;
-    });
+            `;
+        });
+    } catch (e) {
+        console.error(e);
+    }
 }
 
-function showLoading() {
-    errorDiv.classList.add('hidden');
-    contentDisplay.classList.add('hidden');
-    emptyState.classList.add('hidden');
-    loadingDiv.classList.remove('hidden');
-    
-    // Disable button with a tech-style text
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `Running Protocol <div class="loader" style="width:15px; height:15px; border-width:2px; display:inline-block; margin-bottom:0; vertical-align:middle; margin-left:5px;"></div>`;
+function showDashboard() {
+    document.getElementById('brandDetailView').classList.add('hidden');
+    document.getElementById('dashboardView').classList.remove('hidden');
+    currentBrandId = null;
+    loadBrands();
 }
 
-function showError(msg) {
-    loadingDiv.classList.add('hidden');
-    errorDiv.classList.remove('hidden');
-    errorText.textContent = msg;
-    
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = `Initialize Agent <i class="ph-bold ph-arrow-right"></i>`;
+// --- Content Generation ---
+async function generateSchedule() {
+    const btn = document.getElementById('generateBtn');
+    const topicsRaw = document.getElementById('weekTopics').value;
+    const focus = document.getElementById('weekFocus').value;
+
+    if (!topicsRaw) return alert("Please enter at least one topic");
+
+    // Convert new lines to array items
+    const topics = topicsRaw.split('\n').filter(t => t.trim() !== '');
+
+    btn.disabled = true;
+    btn.innerHTML = 'Generating... <div class="loader-mini"></div>';
+
+    try {
+        const res = await fetch(`${API_BASE}/schedule`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                brand_id: currentBrandId,
+                week_focus: focus,
+                topics: topics
+            })
+        });
+
+        if (!res.ok) throw new Error("Generation failed");
+
+        toggleScheduleModal();
+        loadPosts(currentBrandId); // Refresh list
+        
+        // Reset form
+        document.getElementById('weekTopics').value = '';
+        document.getElementById('weekFocus').value = '';
+
+    } catch (e) {
+        alert("Failed to generate content. Ensure Backend is running.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Generate Content <i class="ph-bold ph-sparkle"></i>';
+    }
 }
 
+// --- UI Helpers ---
+function toggleBrandModal() {
+    document.getElementById('brandModal').classList.toggle('hidden');
+}
+function toggleScheduleModal() {
+    document.getElementById('scheduleModal').classList.toggle('hidden');
+}
