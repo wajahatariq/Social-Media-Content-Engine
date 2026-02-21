@@ -9,6 +9,7 @@ class Brand(BaseModel):
     name: str
     industry: str
     website: str
+    phone_number: str = "+1 (470) 802-7248"
     tone_voice: str = "Professional"
     facebook_page_id: Optional[str] = None
     facebook_access_token: Optional[str] = None
