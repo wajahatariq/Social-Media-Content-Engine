@@ -25,26 +25,24 @@ class AgentState(TypedDict):
     final_caption: str
 
 def research_node(state: AgentState):
-    """Searches for current trends."""
     query = f"latest trends related to {', '.join(state['topics'])} in {state['industry']} industry"
     results = tavily.invoke(query)
     context = "\n".join([f"- {r['content']}" for r in results])
     return {"research_data": context}
 
 def strategist_node(state: AgentState):
-    """Agent 1: Develops the core idea and visual concept."""
     prompt = f"""
     You are a Content Strategist for {state['client_name']} ({state['industry']}).
     Topic: {state['topics'][0] if state['topics'] else 'General Trends'}
     Research: {state['research_data']}
     
     Task: 
-    1. Develop the core message points for a post.
+    1. Develop an extremely short core message (strictly 7 to 15 words maximum).
     2. Suggest a strong visual idea.
     
     Output MUST be valid JSON exactly like this:
     {{
-        "raw_concept": "2 sentence summary of the core message",
+        "raw_concept": "Short message here.",
         "visual_idea": "Description of the visual graphic"
     }}
     """
@@ -54,30 +52,32 @@ def strategist_node(state: AgentState):
         clean_json = response.content.replace("```json", "").replace("```", "")
         data = json.loads(clean_json)
         return {
-            "raw_concept": data.get("raw_concept", "Promote brand services."), 
+            "raw_concept": data.get("raw_concept", "Elevate your brand with professional services."), 
             "visual_idea": data.get("visual_idea", "Professional brand graphic.")
         }
     except Exception:
-        return {"raw_concept": "Promote our latest services.", "visual_idea": "Professional brand graphic."}
+        return {"raw_concept": "Elevate your brand with our professional services.", "visual_idea": "Professional brand graphic."}
 
 def copywriter_node(state: AgentState):
-    """Agent 2: Writes the final caption based on the strict template."""
     prompt = f"""
     You are an expert Social Media Copywriter for {state['client_name']}.
     
     Take this raw concept from the strategist: {state['raw_concept']}
     
-    Write the final social media caption STRICTLY following this exact format:
-    Line 1 & 2: A compelling 2-line caption based on the concept.
-    Line 3: (Leave this line blank)
-    Line 4: A highly CREATIVE and UNIQUE Call to Action for the phone number: {state['phone_number']} (Change the phrasing every time, e.g. "Elevate your brand today: [Phone]")
-    Line 5: A highly CREATIVE and UNIQUE Call to Action for the website: {state['website']} (Change the phrasing every time, e.g. "See how design leaves a mark: [Website]")
-    Line 6: (Leave this line blank)
-    Line 7: 5 to 8 highly relevant hashtags.
+    Write the final social media caption STRICTLY following this exact structural pattern. 
+    Do not deviate from this pattern under any circumstances.
+    
+    [Line 1]: A short, punchy sentence based on the concept (7 to 10 words).
+    [Line 2]: A short supporting statement (5 to 8 words).
+    [Line 3]: (Leave this line empty)
+    [Line 4]: [Creative CTA phrase]: {state['phone_number']}
+    [Line 5]: [Creative CTA phrase]: {state['website']}
+    [Line 6]: (Leave this line empty)
+    [Line 7]: 5 to 8 highly relevant hashtags starting with #.
 
     Constraints:
-    - Do NOT include emojis under any circumstances.
-    - Do NOT include notes or extra text. 
+    - NO EMOJIS. You are strictly forbidden from outputting emojis.
+    - NO extra introductory or concluding text.
     - Output ONLY the final text intended for the post.
     """
     response = llm.invoke([HumanMessage(content=prompt)])
