@@ -98,10 +98,18 @@
                 <div id="viewVisual" class="visual-block"></div>
             </div>
 
+            <div id="uploadArea" class="upload-box hidden">
+                <label>Upload Final Design to Queue Auto-Post</label>
+                <input type="file" id="designUpload" accept="image/png, image/jpeg">
+            </div>
+
             <div class="modal-footer">
                 <button onclick="closeViewModal()">Close</button>
                 <button id="btnGenerate" class="btn-magic" onclick="runGenerator()">
-                    <i class="ph-bold ph-sparkle"></i> Generate with AI
+                    <i class="ph-bold ph-lightbulb"></i> Generate Content
+                </button>
+                <button id="btnApprove" class="btn-primary hidden" onclick="approveAndQueue()">
+                    <i class="ph-bold ph-check-circle"></i> Approve and Queue
                 </button>
             </div>
         </div>
@@ -110,3 +118,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
