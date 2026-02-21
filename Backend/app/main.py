@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
-from .models import Brand, SocialPost, ImageUpload
+from .models import Brand, SocialPost, ApproveUpload, DraftRequest
 from .database import db, get_db_status
 from .agent import run_content_agent
 from bson import ObjectId
@@ -32,57 +32,68 @@ async def create_brand(brand: Brand):
 async def get_brands():
     return await db.brands.find().to_list(100)
 
+@app.delete("/api/brands/{brand_id}")
+async def delete_brand(brand_id: str):
+    try:
+        await db.posts.delete_many({"brand_id": brand_id})
+        res = await db.brands.delete_one({"_id": ObjectId(brand_id)})
+        if res.deleted_count == 0:
+            raise HTTPException(404, "Brand not found")
+        return {"status": "Deleted successfully"}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
 @app.get("/api/brands/{brand_id}/posts", response_model=List[SocialPost])
 async def get_posts(brand_id: str):
     return await db.posts.find({"brand_id": brand_id}).to_list(1000)
 
-@app.post("/api/posts/plan")
-async def plan_post(post: SocialPost):
-    post.status = "Planned"
-    res = await db.posts.insert_one(post.model_dump(by_alias=True, exclude=["id"]))
-    return {"id": str(res.inserted_id), "status": "Planned"}
-
-@app.post("/api/posts/{post_id}/generate")
-async def generate_single_post(post_id: str):
+@app.post("/api/posts/draft")
+async def auto_draft_post(req: DraftRequest):
     try:
-        post = await db.posts.find_one({"_id": ObjectId(post_id)})
-        brand = await db.brands.find_one({"_id": ObjectId(post['brand_id'])})
+        brand = await db.brands.find_one({"_id": ObjectId(req.brand_id)})
         
         agent_input = {
             "client_name": brand['name'],
             "industry": brand['industry'],
             "website": brand['website'],
-            "phone_number": brand.get('phone_number', '+1 (470) 802-7248'),
-            "topics": [post['topic']] 
+            "phone_number": brand.get('phone_number', ''),
+            "topics": [req.topic] 
         }
+        
         generated = await run_content_agent(agent_input)
         
         if "error" in generated:
             raise HTTPException(500, "AI Generation Failed")
 
-        update_data = {
-            "caption": generated['caption'],
-            "visual_idea": generated['visual_idea'],
-            "status": "Generated"
-        }
+        post = SocialPost(
+            brand_id=req.brand_id,
+            topic=req.topic,
+            scheduled_date=datetime.now(),
+            caption=generated['caption'],
+            visual_idea=generated['visual_idea'],
+            status="Generated"
+        )
         
-        await db.posts.update_one({"_id": ObjectId(post_id)}, {"$set": update_data})
-        return {**post, **update_data, "id": post_id, "_id": str(post["_id"])} 
+        res = await db.posts.insert_one(post.model_dump(by_alias=True, exclude=["id"]))
+        post_data = post.model_dump(by_alias=True)
+        post_data["_id"] = str(res.inserted_id)
+        return post_data
 
     except Exception as e:
         logger.error(f"Error: {e}")
         raise HTTPException(500, str(e))
 
 @app.post("/api/posts/{post_id}/approve")
-async def approve_post(post_id: str, upload: ImageUpload):
+async def approve_post(post_id: str, upload: ApproveUpload):
     try:
         update_data = {
             "image_base64": upload.image_base64,
+            "scheduled_date": upload.scheduled_date,
             "is_approved": True,
             "status": "Approved"
         }
         await db.posts.update_one({"_id": ObjectId(post_id)}, {"$set": update_data})
-        return {"status": "Approved and queued for auto-posting"}
+        return {"status": "Approved and scheduled"}
     except Exception as e:
         raise HTTPException(500, str(e))
 
