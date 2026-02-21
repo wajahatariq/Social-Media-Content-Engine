@@ -22,10 +22,6 @@ function initCalendar() {
         events: [], 
         eventClick: function(info) {
             openPostDetails(info.event);
-        },
-        dateClick: function(info) {
-            document.getElementById('planDate').value = info.dateStr + "T10:00";
-            openPlanModal();
         }
     });
     calendar.render();
@@ -67,6 +63,7 @@ async function selectBrand(brand, el) {
 }
 
 async function refreshCalendar() {
+    if (!activeBrandId) return;
     const res = await fetch(`${API_BASE}/brands/${activeBrandId}/posts`);
     const posts = await res.json();
     
@@ -74,7 +71,7 @@ async function refreshCalendar() {
         id: p._id,
         title: p.topic,
         start: p.scheduled_date,
-        backgroundColor: p.status === 'Approved' ? '#10b981' : (p.status === 'Generated' ? '#3b82f6' : '#334155'),
+        backgroundColor: p.status === 'Approved' ? '#10b981' : '#3b82f6',
         extendedProps: p
     }));
     
@@ -82,24 +79,37 @@ async function refreshCalendar() {
     calendar.addEventSource(events);
 }
 
-async function savePlan() {
-    const topic = document.getElementById('planTopic').value;
-    const date = document.getElementById('planDate').value;
-    
-    if(!topic || !date) return alert("Required fields missing");
+function toggleDraftModal() { document.getElementById('draftModal').classList.toggle('hidden'); }
+function toggleBrandModal() { document.getElementById('brandModal').classList.toggle('hidden'); }
+function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); }
 
-    await fetch(`${API_BASE}/posts/plan`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            brand_id: activeBrandId,
-            topic: topic,
-            scheduled_date: date
-        })
-    });
-    
-    togglePlanModal();
-    refreshCalendar();
+async function createDraft() {
+    const topic = document.getElementById('draftTopic').value;
+    if(!topic) return alert("Please enter a topic.");
+
+    const btn = document.getElementById('btnDraft');
+    btn.innerHTML = 'Generating Content...';
+    btn.disabled = true;
+
+    try {
+        await fetch(`${API_BASE}/posts/draft`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                brand_id: activeBrandId,
+                topic: topic
+            })
+        });
+        
+        toggleDraftModal();
+        document.getElementById('draftTopic').value = '';
+        refreshCalendar();
+    } catch(e) {
+        alert("Generation failed. Check server connection.");
+    } finally {
+        btn.innerHTML = 'Generate Now';
+        btn.disabled = false;
+    }
 }
 
 function openPostDetails(event) {
@@ -109,67 +119,42 @@ function openPostDetails(event) {
     document.getElementById('viewTopic').textContent = p.topic;
     document.getElementById('viewDate').textContent = new Date(event.start).toLocaleString();
     
+    const localDate = new Date(event.start);
+    localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
+    document.getElementById('scheduleDate').value = localDate.toISOString().slice(0, 16);
+    
     const statusBadge = document.getElementById('viewStatus');
     statusBadge.textContent = p.status;
     statusBadge.className = `status-badge ${p.status.toLowerCase()}`;
     
-    const btn = document.getElementById('btnGenerate');
     const contentBox = document.getElementById('aiContent');
     const uploadArea = document.getElementById('uploadArea');
     const btnApprove = document.getElementById('btnApprove');
 
-    if (p.status === 'Generated' || p.status === 'Approved') {
-        contentBox.classList.remove('hidden');
-        document.getElementById('viewCaption').innerText = p.caption;
-        document.getElementById('viewVisual').innerText = p.visual_idea;
-        
+    contentBox.classList.remove('hidden');
+    document.getElementById('viewCaption').innerText = p.caption;
+    document.getElementById('viewVisual').innerText = p.visual_idea;
+    
+    if (p.status !== 'Approved') {
         uploadArea.classList.remove('hidden');
         btnApprove.classList.remove('hidden');
-        btn.innerHTML = 'Regenerate <i class="ph-bold ph-arrows-clockwise"></i>';
     } else {
-        contentBox.classList.add('hidden');
         uploadArea.classList.add('hidden');
         btnApprove.classList.add('hidden');
-        btn.innerHTML = 'Generate Content <i class="ph-bold ph-lightbulb"></i>';
     }
     
     document.getElementById('viewModal').classList.remove('hidden');
 }
 
-async function runGenerator() {
-    const btn = document.getElementById('btnGenerate');
-    btn.disabled = true;
-    btn.innerHTML = 'Analyzing Trends... <div class="loader-mini"></div>';
-    
-    try {
-        const res = await fetch(`${API_BASE}/posts/${activePostId}/generate`, {method: 'POST'});
-        if(!res.ok) throw new Error("Generation Failed");
-        
-        const updatedPost = await res.json();
-        
-        document.getElementById('viewCaption').innerText = updatedPost.caption;
-        document.getElementById('viewVisual').innerText = updatedPost.visual_idea;
-        document.getElementById('aiContent').classList.remove('hidden');
-        document.getElementById('uploadArea').classList.remove('hidden');
-        document.getElementById('btnApprove').classList.remove('hidden');
-        
-        const statusBadge = document.getElementById('viewStatus');
-        statusBadge.textContent = "GENERATED";
-        statusBadge.classList.add('generated');
-        
-        refreshCalendar(); 
-    } catch(e) {
-        alert("Error: " + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Regenerate <i class="ph-bold ph-arrows-clockwise"></i>';
-    }
-}
-
 async function approveAndQueue() {
     const fileInput = document.getElementById('designUpload');
+    const dateInput = document.getElementById('scheduleDate').value;
+
     if (!fileInput.files[0]) {
         return alert("Please upload your final design image first.");
+    }
+    if (!dateInput) {
+        return alert("Please select a date and time to publish this post.");
     }
 
     const file = fileInput.files[0];
@@ -178,39 +163,71 @@ async function approveAndQueue() {
     reader.onloadend = async () => {
         const base64String = reader.result;
         const btn = document.getElementById('btnApprove');
-        btn.innerHTML = 'Queuing... <div class="loader-mini"></div>';
+        btn.innerHTML = 'Queuing...';
+        btn.disabled = true;
 
         try {
             await fetch(`${API_BASE}/posts/${activePostId}/approve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image_base64: base64String })
+                body: JSON.stringify({ 
+                    image_base64: base64String,
+                    scheduled_date: new Date(dateInput).toISOString()
+                })
             });
             
             closeViewModal();
             refreshCalendar(); 
-            alert("Post Queued! The system will auto-post it at the scheduled time.");
+            alert("Post Queued! It will be published at your selected time.");
         } catch (e) {
             alert("Error queuing post.");
+        } finally {
+            btn.innerHTML = 'Approve and Queue';
+            btn.disabled = false;
         }
     };
     reader.readAsDataURL(file);
 }
 
-function toggleBrandModal() { document.getElementById('brandModal').classList.toggle('hidden'); }
-function togglePlanModal() { document.getElementById('planModal').classList.toggle('hidden'); }
-function openPlanModal() { document.getElementById('planModal').classList.remove('hidden'); }
-function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); }
-
 async function createBrand() {
-    const name = document.getElementById('newBrandName').value;
-    const ind = document.getElementById('newBrandIndustry').value;
-    const web = document.getElementById('newBrandWebsite').value;
+    const data = {
+        name: document.getElementById('newBrandName').value,
+        industry: document.getElementById('newBrandIndustry').value,
+        website: document.getElementById('newBrandWebsite').value,
+        phone_number: document.getElementById('newBrandPhone').value,
+        facebook_page_id: document.getElementById('newBrandFbPageId').value,
+        facebook_access_token: document.getElementById('newBrandFbToken').value
+    };
+
+    if (!data.name || !data.industry || !data.website || !data.phone_number) {
+        return alert("Name, Industry, Website, and Phone are required.");
+    }
+
     await fetch(`${API_BASE}/brands`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({name, industry: ind, website: web})
+        body: JSON.stringify(data)
     });
     toggleBrandModal();
     loadBrands();
+}
+
+async function deleteBrand() {
+    if (!activeBrandId) return;
+    if (confirm("Are you sure you want to delete this brand and all its scheduled posts?")) {
+        try {
+            await fetch(`${API_BASE}/brands/${activeBrandId}`, { method: 'DELETE' });
+            activeBrandId = null;
+            document.getElementById('emptyState').classList.remove('hidden');
+            document.getElementById('calendarWrapper').classList.add('hidden');
+            document.getElementById('actions').classList.add('hidden');
+            document.getElementById('activeBrandHeader').innerHTML = `
+                <h2>Select a Brand</h2>
+                <p>Select a brand from the sidebar to view calendar.</p>
+            `;
+            loadBrands();
+        } catch (e) {
+            alert("Failed to delete brand.");
+        }
+    }
 }
