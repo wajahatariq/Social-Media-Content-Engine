@@ -1,6 +1,6 @@
 import os
 import json
-from typing import TypedDict, List, Optional
+from typing import TypedDict, List
 from langchain_groq import ChatGroq
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
@@ -69,14 +69,14 @@ def copywriter_node(state: AgentState):
     
     [Line 1]: A short, punchy sentence based on the concept (7 to 10 words).
     [Line 2]: A short supporting statement (5 to 8 words).
-    [Line 3]: (Leave this line empty)
+    [Line 3]: (Leave this line entirely empty)
     [Line 4]: [Creative CTA phrase]: {state['phone_number']}
     [Line 5]: [Creative CTA phrase]: {state['website']}
-    [Line 6]: (Leave this line empty)
+    [Line 6]: (Leave this line entirely empty)
     [Line 7]: 5 to 8 highly relevant hashtags starting with #.
 
     Constraints:
-    - NO EMOJIS. You are strictly forbidden from outputting emojis.
+    - NO EMOJIS. You are strictly forbidden from outputting emojis in any part of the text.
     - NO extra introductory or concluding text.
     - Output ONLY the final text intended for the post.
     """
@@ -100,7 +100,7 @@ async def run_content_agent(inputs):
         "client_name": inputs["client_name"],
         "industry": inputs["industry"],
         "website": inputs["website"],
-        "phone_number": inputs.get("phone_number", "+1 (470) 802-7248"),
+        "phone_number": inputs.get("phone_number", ""),
         "topics": inputs.get("topics", []),
         "research_data": "",
         "raw_concept": "",
