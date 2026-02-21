@@ -9,7 +9,7 @@ class Brand(BaseModel):
     name: str
     industry: str
     website: str
-    phone_number: str = "+1 (470) 802-7248"
+    phone_number: str
     tone_voice: str = "Professional"
     facebook_page_id: Optional[str] = None
     facebook_access_token: Optional[str] = None
@@ -26,10 +26,15 @@ class SocialPost(BaseModel):
     visual_idea: Optional[str] = None
     image_base64: Optional[str] = None  
     is_approved: bool = False           
-    status: str = "Planned" 
+    status: str = "Generated" 
     created_at: datetime = Field(default_factory=datetime.now)
 
     model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
-class ImageUpload(BaseModel):
+class ApproveUpload(BaseModel):
     image_base64: str
+    scheduled_date: datetime
+
+class DraftRequest(BaseModel):
+    brand_id: str
+    topic: str
