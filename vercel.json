@@ -5,6 +5,12 @@
     { "source": "/", "destination": "/Frontend/index.html" }, 
     { "source": "/(.*)", "destination": "/Frontend/$1" }
   ],
+  "crons": [
+    {
+      "path": "/api/cron/publish",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "builds": [
     {
       "src": "Backend/app/main.py",
