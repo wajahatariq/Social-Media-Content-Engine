@@ -1,6 +1,4 @@
-// UPDATE THIS URL for Production
 const API_BASE = "https://socialmediacontentengine.vercel.app/api"; 
-// const API_BASE = "http://localhost:8000/api"; 
 
 let calendar;
 let activeBrandId = null;
@@ -11,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBrands();
 });
 
-// --- 1. SETUP CALENDAR ---
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
@@ -22,12 +19,11 @@ function initCalendar() {
             right: 'dayGridMonth,timeGridWeek'
         },
         height: 'auto',
-        events: [], // Will load from DB
+        events: [], 
         eventClick: function(info) {
             openPostDetails(info.event);
         },
         dateClick: function(info) {
-            // Pre-fill date when clicking a day
             document.getElementById('planDate').value = info.dateStr + "T10:00";
             openPlanModal();
         }
@@ -35,7 +31,6 @@ function initCalendar() {
     calendar.render();
 }
 
-// --- 2. BRAND SIDEBAR ---
 async function loadBrands() {
     try {
         const res = await fetch(`${API_BASE}/brands`);
@@ -56,7 +51,6 @@ async function loadBrands() {
 async function selectBrand(brand, el) {
     activeBrandId = brand._id;
     
-    // UI Updates
     document.querySelectorAll('.brand-item').forEach(i => i.classList.remove('active'));
     el.classList.add('active');
     
@@ -72,7 +66,6 @@ async function selectBrand(brand, el) {
     refreshCalendar();
 }
 
-// --- 3. POSTS & CALENDAR DATA ---
 async function refreshCalendar() {
     const res = await fetch(`${API_BASE}/brands/${activeBrandId}/posts`);
     const posts = await res.json();
@@ -81,7 +74,7 @@ async function refreshCalendar() {
         id: p._id,
         title: p.topic,
         start: p.scheduled_date,
-        backgroundColor: p.status === 'Generated' ? '#10b981' : '#334155',
+        backgroundColor: p.status === 'Approved' ? '#10b981' : (p.status === 'Generated' ? '#3b82f6' : '#334155'),
         extendedProps: p
     }));
     
@@ -89,7 +82,6 @@ async function refreshCalendar() {
     calendar.addEventSource(events);
 }
 
-// --- 4. PLANNING (Step 1) ---
 async function savePlan() {
     const topic = document.getElementById('planTopic').value;
     const date = document.getElementById('planDate').value;
@@ -110,95 +102,6 @@ async function savePlan() {
     refreshCalendar();
 }
 
-// --- 5. GENERATION (Step 2) ---
-function openPostDetails(event) {
-    const p = event.extendedProps;
-    activePostId = p._id; // Fixed: Use _id from props
-    
-    document.getElementById('viewTopic').textContent = p.topic;
-    document.getElementById('viewDate').textContent = new Date(event.start).toLocaleString();
-    
-    const statusBadge = document.getElementById('viewStatus');
-    statusBadge.textContent = p.status;
-    statusBadge.className = `status-badge ${p.status.toLowerCase()}`;
-    
-    const btn = document.getElementById('btnGenerate');
-    const contentBox = document.getElementById('aiContent');
-
-    if (p.status === 'Generated') {
-        contentBox.classList.remove('hidden');
-        document.getElementById('viewCaption').innerText = p.caption;
-        document.getElementById('viewVisual').innerText = p.visual_idea;
-        btn.innerHTML = 'Regenerate <i class="ph-bold ph-arrows-clockwise"></i>';
-    } else {
-        contentBox.classList.add('hidden');
-        btn.innerHTML = 'Generate Content <i class="ph-bold ph-sparkle"></i>';
-    }
-    
-    document.getElementById('viewModal').classList.remove('hidden');
-}
-
-async function runGenerator() {
-    const btn = document.getElementById('btnGenerate');
-    btn.disabled = true;
-    btn.innerHTML = 'Analyzing Trends... <div class="loader-mini"></div>';
-    
-    try {
-        const res = await fetch(`${API_BASE}/posts/${activePostId}/generate`, {method: 'POST'});
-        if(!res.ok) throw new Error("Generation Failed");
-        
-        const updatedPost = await res.json();
-        
-        // Update UI immediately
-        document.getElementById('viewCaption').innerText = updatedPost.caption;
-        document.getElementById('viewVisual').innerText = updatedPost.visual_idea;
-        document.getElementById('aiContent').classList.remove('hidden');
-        
-        const statusBadge = document.getElementById('viewStatus');
-        statusBadge.textContent = "GENERATED";
-        statusBadge.classList.add('generated');
-        
-        refreshCalendar(); // Update calendar color
-    } catch(e) {
-        alert("Error: " + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Regenerate <i class="ph-bold ph-arrows-clockwise"></i>';
-    }
-}
-// Add this inside script.js
-async function approveAndQueue() {
-    const fileInput = document.getElementById('designUpload');
-    if (!fileInput.files[0]) {
-        return alert("Please upload your final design image first.");
-    }
-
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    reader.onloadend = async () => {
-        const base64String = reader.result;
-        const btn = document.getElementById('btnApprove');
-        btn.innerHTML = 'Queuing... <div class="loader-mini"></div>';
-
-        try {
-            await fetch(`${API_BASE}/posts/${activePostId}/approve`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image_base64: base64String })
-            });
-            
-            closeViewModal();
-            refreshCalendar(); 
-            alert("Post Queued! The system will auto-post it at the scheduled time.");
-        } catch (e) {
-            alert("Error queuing post.");
-        }
-    };
-    reader.readAsDataURL(file);
-}
-
-// Modify openPostDetails inside script.js:
 function openPostDetails(event) {
     const p = event.extendedProps;
     activePostId = p._id; 
@@ -232,11 +135,73 @@ function openPostDetails(event) {
     
     document.getElementById('viewModal').classList.remove('hidden');
 }
-// --- HELPERS ---
+
+async function runGenerator() {
+    const btn = document.getElementById('btnGenerate');
+    btn.disabled = true;
+    btn.innerHTML = 'Analyzing Trends... <div class="loader-mini"></div>';
+    
+    try {
+        const res = await fetch(`${API_BASE}/posts/${activePostId}/generate`, {method: 'POST'});
+        if(!res.ok) throw new Error("Generation Failed");
+        
+        const updatedPost = await res.json();
+        
+        document.getElementById('viewCaption').innerText = updatedPost.caption;
+        document.getElementById('viewVisual').innerText = updatedPost.visual_idea;
+        document.getElementById('aiContent').classList.remove('hidden');
+        document.getElementById('uploadArea').classList.remove('hidden');
+        document.getElementById('btnApprove').classList.remove('hidden');
+        
+        const statusBadge = document.getElementById('viewStatus');
+        statusBadge.textContent = "GENERATED";
+        statusBadge.classList.add('generated');
+        
+        refreshCalendar(); 
+    } catch(e) {
+        alert("Error: " + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Regenerate <i class="ph-bold ph-arrows-clockwise"></i>';
+    }
+}
+
+async function approveAndQueue() {
+    const fileInput = document.getElementById('designUpload');
+    if (!fileInput.files[0]) {
+        return alert("Please upload your final design image first.");
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onloadend = async () => {
+        const base64String = reader.result;
+        const btn = document.getElementById('btnApprove');
+        btn.innerHTML = 'Queuing... <div class="loader-mini"></div>';
+
+        try {
+            await fetch(`${API_BASE}/posts/${activePostId}/approve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image_base64: base64String })
+            });
+            
+            closeViewModal();
+            refreshCalendar(); 
+            alert("Post Queued! The system will auto-post it at the scheduled time.");
+        } catch (e) {
+            alert("Error queuing post.");
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
 function toggleBrandModal() { document.getElementById('brandModal').classList.toggle('hidden'); }
 function togglePlanModal() { document.getElementById('planModal').classList.toggle('hidden'); }
 function openPlanModal() { document.getElementById('planModal').classList.remove('hidden'); }
 function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); }
+
 async function createBrand() {
     const name = document.getElementById('newBrandName').value;
     const ind = document.getElementById('newBrandIndustry').value;
@@ -249,4 +214,3 @@ async function createBrand() {
     toggleBrandModal();
     loadBrands();
 }
-
