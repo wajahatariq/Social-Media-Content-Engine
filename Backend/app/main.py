@@ -51,6 +51,8 @@ async def generate_single_post(post_id: str):
         agent_input = {
             "client_name": brand['name'],
             "industry": brand['industry'],
+            "website": brand['website'],
+            "phone_number": brand.get('phone_number', '+1 (470) 802-7248'),
             "topics": [post['topic']] 
         }
         generated = await run_content_agent(agent_input)
@@ -58,10 +60,9 @@ async def generate_single_post(post_id: str):
         if "error" in generated:
             raise HTTPException(500, "AI Generation Failed")
 
-        card = generated['cards'][0]
         update_data = {
-            "caption": card['caption'],
-            "visual_idea": card['visual_idea'],
+            "caption": generated['caption'],
+            "visual_idea": generated['visual_idea'],
             "status": "Generated"
         }
         
@@ -87,7 +88,6 @@ async def approve_post(post_id: str, upload: ImageUpload):
 
 @app.get("/api/cron/publish")
 async def auto_publish_posts():
-    """This endpoint is called automatically by Vercel every 5 minutes."""
     now = datetime.now()
     posts_to_publish = await db.posts.find({
         "status": "Approved", 
