@@ -32,9 +32,12 @@
                     <h2>Select a Brand</h2>
                     <p>Select a brand from the sidebar to view calendar.</p>
                 </div>
-                <div id="actions" class="hidden">
-                    <button class="btn-primary" onclick="openPlanModal()">
-                        <i class="ph-bold ph-plus"></i> Plan Post
+                <div id="actions" class="hidden" style="display: flex; gap: 1rem;">
+                    <button class="btn-danger" onclick="deleteBrand()">
+                        <i class="ph-bold ph-trash"></i> Delete Brand
+                    </button>
+                    <button class="btn-primary" onclick="toggleDraftModal()">
+                        <i class="ph-bold ph-plus"></i> Auto-Generate Post
                     </button>
                 </div>
             </header>
@@ -56,26 +59,25 @@
             <h3>New Brand Workspace</h3>
             <input type="text" id="newBrandName" placeholder="Brand Name">
             <input type="text" id="newBrandIndustry" placeholder="Industry">
-            <input type="text" id="newBrandWebsite" placeholder="Website">
+            <input type="text" id="newBrandWebsite" placeholder="Website URL">
+            <input type="text" id="newBrandPhone" placeholder="Phone Number">
+            <input type="text" id="newBrandFbPageId" placeholder="Facebook Page ID (Optional)">
+            <input type="text" id="newBrandFbToken" placeholder="Facebook Access Token (Optional)">
             <div class="modal-footer">
                 <button onclick="toggleBrandModal()">Cancel</button>
-                <button class="btn-primary" onclick="createBrand()">Create</button>
+                <button class="btn-primary" onclick="createBrand()">Create Brand</button>
             </div>
         </div>
     </div>
 
-    <div id="planModal" class="modal hidden">
+    <div id="draftModal" class="modal hidden">
         <div class="modal-box">
-            <h3>Plan Content Slot</h3>
+            <h3>Auto-Generate New Post</h3>
             <label>Topic / Focus</label>
-            <input type="text" id="planTopic" placeholder="e.g., Summer Sale Announcement">
-            
-            <label>Date & Time</label>
-            <input type="datetime-local" id="planDate">
-            
+            <input type="text" id="draftTopic" placeholder="e.g., Mascot Logo Trends">
             <div class="modal-footer">
-                <button onclick="togglePlanModal()">Cancel</button>
-                <button class="btn-primary" onclick="savePlan()">Save Slot</button>
+                <button onclick="toggleDraftModal()">Cancel</button>
+                <button id="btnDraft" class="btn-primary" onclick="createDraft()">Generate Now</button>
             </div>
         </div>
     </div>
@@ -83,29 +85,29 @@
     <div id="viewModal" class="modal hidden">
         <div class="modal-box large">
             <div class="badge-row">
-                <span id="viewStatus" class="status-badge">PLANNED</span>
+                <span id="viewStatus" class="status-badge"></span>
                 <span id="viewDate" class="date-badge"></span>
             </div>
             
             <h2 id="viewTopic">Topic Name</h2>
             
             <div id="aiContent" class="ai-box hidden">
-                <label>Caption</label>
+                <label>Generated Caption</label>
                 <div id="viewCaption" class="text-block"></div>
                 <label>Visual Direction</label>
                 <div id="viewVisual" class="visual-block"></div>
             </div>
 
             <div id="uploadArea" class="upload-box hidden">
-                <label>Upload Final Design to Queue Auto-Post</label>
-                <input type="file" id="designUpload" accept="image/png, image/jpeg">
+                <label>1. Upload Final Design</label>
+                <input type="file" id="designUpload" accept="image/png, image/jpeg" style="margin-bottom: 1.5rem;">
+                
+                <label>2. Select Publish Date and Time</label>
+                <input type="datetime-local" id="scheduleDate">
             </div>
 
             <div class="modal-footer">
                 <button onclick="closeViewModal()">Close</button>
-                <button id="btnGenerate" class="btn-magic" onclick="runGenerator()">
-                    <i class="ph-bold ph-lightbulb"></i> Generate Content
-                </button>
                 <button id="btnApprove" class="btn-primary hidden" onclick="approveAndQueue()">
                     <i class="ph-bold ph-check-circle"></i> Approve and Queue
                 </button>
