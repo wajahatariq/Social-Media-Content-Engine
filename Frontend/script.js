@@ -166,7 +166,72 @@ async function runGenerator() {
         btn.innerHTML = 'Regenerate <i class="ph-bold ph-arrows-clockwise"></i>';
     }
 }
+// Add this inside script.js
+async function approveAndQueue() {
+    const fileInput = document.getElementById('designUpload');
+    if (!fileInput.files[0]) {
+        return alert("Please upload your final design image first.");
+    }
 
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onloadend = async () => {
+        const base64String = reader.result;
+        const btn = document.getElementById('btnApprove');
+        btn.innerHTML = 'Queuing... <div class="loader-mini"></div>';
+
+        try {
+            await fetch(`${API_BASE}/posts/${activePostId}/approve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image_base64: base64String })
+            });
+            
+            closeViewModal();
+            refreshCalendar(); 
+            alert("Post Queued! The system will auto-post it at the scheduled time.");
+        } catch (e) {
+            alert("Error queuing post.");
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// Modify openPostDetails inside script.js:
+function openPostDetails(event) {
+    const p = event.extendedProps;
+    activePostId = p._id; 
+    
+    document.getElementById('viewTopic').textContent = p.topic;
+    document.getElementById('viewDate').textContent = new Date(event.start).toLocaleString();
+    
+    const statusBadge = document.getElementById('viewStatus');
+    statusBadge.textContent = p.status;
+    statusBadge.className = `status-badge ${p.status.toLowerCase()}`;
+    
+    const btn = document.getElementById('btnGenerate');
+    const contentBox = document.getElementById('aiContent');
+    const uploadArea = document.getElementById('uploadArea');
+    const btnApprove = document.getElementById('btnApprove');
+
+    if (p.status === 'Generated' || p.status === 'Approved') {
+        contentBox.classList.remove('hidden');
+        document.getElementById('viewCaption').innerText = p.caption;
+        document.getElementById('viewVisual').innerText = p.visual_idea;
+        
+        uploadArea.classList.remove('hidden');
+        btnApprove.classList.remove('hidden');
+        btn.innerHTML = 'Regenerate <i class="ph-bold ph-arrows-clockwise"></i>';
+    } else {
+        contentBox.classList.add('hidden');
+        uploadArea.classList.add('hidden');
+        btnApprove.classList.add('hidden');
+        btn.innerHTML = 'Generate Content <i class="ph-bold ph-lightbulb"></i>';
+    }
+    
+    document.getElementById('viewModal').classList.remove('hidden');
+}
 // --- HELPERS ---
 function toggleBrandModal() { document.getElementById('brandModal').classList.toggle('hidden'); }
 function togglePlanModal() { document.getElementById('planModal').classList.toggle('hidden'); }
@@ -184,3 +249,4 @@ async function createBrand() {
     toggleBrandModal();
     loadBrands();
 }
+
