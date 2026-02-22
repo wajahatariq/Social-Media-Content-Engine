@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel  # <--- ADD THIS EXACT LINE
+from pydantic import BaseModel
 from typing import List
 from .models import Brand, SocialPost, ApproveUpload, AutoMonthRequest
 from .database import db, get_db_status
@@ -159,5 +159,6 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
+
 
 
