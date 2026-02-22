@@ -67,8 +67,7 @@ def copywriter_node(state: AgentState):
     Write the final social media caption STRICTLY following this exact structural pattern. 
     Do not deviate from this pattern under any circumstances.
     
-    [Line 1]: A short, punchy sentence based on the concept (7 to 10 words).
-    [Line 2]: A short supporting statement (5 to 8 words).
+    [Line 1-2]: The short, punchy sentences based on the concept (3-4 sentences)
     [Line 3]: (Leave this line entirely empty)
     [Line 4]: [Creative CTA phrase]: {state['phone_number']}
     [Line 5]: [Creative CTA phrase]: {state['website']}
@@ -114,3 +113,4 @@ async def run_content_agent(inputs):
         "caption": result["final_caption"],
         "visual_idea": result["visual_idea"]
     }
+
