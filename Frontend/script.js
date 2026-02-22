@@ -273,4 +273,27 @@ async function deleteBrand() {
     }
 }
 
+// --- NEW: Reschedule Function ---
+async function updateScheduleTime() {
+    const newDateInput = document.getElementById('editScheduleDate').value;
+    if(!newDateInput) return alert("Please select a date and time.");
+
+    try {
+        const res = await fetch(`${API_BASE}/posts/${activePostId}/schedule`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                scheduled_date: new Date(newDateInput).toISOString() 
+            })
+        });
+        
+        if (!res.ok) throw new Error("Failed to update schedule.");
+        
+        closeViewModal();
+        refreshCalendar(); 
+        alert("Post time has been successfully updated!");
+    } catch (e) {
+        alert("Error updating time: " + e.message);
+    }
+}
 
