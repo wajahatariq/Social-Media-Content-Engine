@@ -1,5 +1,4 @@
 const API_BASE = "https://socialmediacontentengine.vercel.app/api"; 
-
 let calendar;
 let activeBrandId = null;
 let activePostId = null;
@@ -22,10 +21,6 @@ function initCalendar() {
         events: [], 
         eventClick: function(info) {
             openPostDetails(info.event);
-        },
-        // --- ADD THIS BLOCK: Listens for clicks on empty days ---
-        dateClick: function(info) {
-            toggleDraftModal();
         }
     });
     calendar.render();
@@ -34,24 +29,11 @@ function initCalendar() {
 async function loadBrands() {
     try {
         const res = await fetch(`${API_BASE}/brands`);
-        
-        // NEW: Check if the backend threw an error
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error("Backend Error:", errorText);
-            document.getElementById('brandList').innerHTML = `<p style="color:red; padding:1rem;">Error loading brands. Check console.</p>`;
-            return;
-        }
-
+        if (!res.ok) throw new Error("Backend connection failed.");
         const brands = await res.json();
         const list = document.getElementById('brandList');
         list.innerHTML = '';
         
-        if (brands.length === 0) {
-            list.innerHTML = `<p style="color:#94a3b8; padding: 1rem; font-size: 0.85rem;">No brands found.</p>`;
-            return;
-        }
-
         brands.forEach(b => {
             const item = document.createElement('div');
             item.className = 'brand-item';
@@ -60,7 +42,7 @@ async function loadBrands() {
             list.appendChild(item);
         });
     } catch(e) { 
-        console.error("Network Error:", e); 
+        document.getElementById('brandList').innerHTML = `<p style="color:red; font-size: 0.8rem; padding: 1rem;">Server Offline</p>`;
     }
 }
 
@@ -99,35 +81,29 @@ async function refreshCalendar() {
     calendar.addEventSource(events);
 }
 
-function toggleDraftModal() { document.getElementById('draftModal').classList.toggle('hidden'); }
-function toggleBrandModal() { document.getElementById('brandModal').classList.toggle('hidden'); }
-function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); }
-
-async function createDraft() {
-    const topic = document.getElementById('draftTopic').value;
-    if(!topic) return alert("Please enter a topic.");
-
-    const btn = document.getElementById('btnDraft');
-    btn.innerHTML = 'Generating Content...';
+// THE NEW ONE-CLICK GENERATOR
+async function generateMonth() {
+    if(!activeBrandId) return;
+    
+    const btn = document.getElementById('btnMonth');
+    btn.innerHTML = '<div class="loader-mini" style="display:inline-block; border-top-color: #3b82f6; width: 14px; height: 14px; margin-right: 5px;"></div> Planning 12 Posts...';
     btn.disabled = true;
 
     try {
-        await fetch(`${API_BASE}/posts/draft`, {
+        const res = await fetch(`${API_BASE}/posts/generate_month`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                brand_id: activeBrandId,
-                topic: topic
-            })
+            body: JSON.stringify({ brand_id: activeBrandId })
         });
         
-        toggleDraftModal();
-        document.getElementById('draftTopic').value = '';
-        refreshCalendar();
+        if (!res.ok) throw new Error("Failed to generate.");
+        
+        await refreshCalendar();
+        alert("Success! 12 new posts have been distributed across your calendar.");
     } catch(e) {
-        alert("Generation failed. Check server connection.");
+        alert("Generation failed. The AI might have taken too long.");
     } finally {
-        btn.innerHTML = 'Generate Now';
+        btn.innerHTML = '<i class="ph-bold ph-calendar-plus"></i> Generate 1-Month Plan';
         btn.disabled = false;
     }
 }
@@ -173,9 +149,6 @@ async function approveAndQueue() {
     if (!fileInput.files[0]) {
         return alert("Please upload your final design image first.");
     }
-    if (!dateInput) {
-        return alert("Please select a date and time to publish this post.");
-    }
 
     const file = fileInput.files[0];
     const reader = new FileReader();
@@ -202,12 +175,15 @@ async function approveAndQueue() {
         } catch (e) {
             alert("Error queuing post.");
         } finally {
-            btn.innerHTML = 'Approve and Queue';
+            btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> Approve and Queue';
             btn.disabled = false;
         }
     };
     reader.readAsDataURL(file);
 }
+
+function toggleBrandModal() { document.getElementById('brandModal').classList.toggle('hidden'); }
+function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); }
 
 async function createBrand() {
     const data = {
@@ -251,5 +227,3 @@ async function deleteBrand() {
         }
     }
 }
-
-
