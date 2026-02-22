@@ -149,35 +149,67 @@ async function approveAndQueue() {
     if (!fileInput.files[0]) {
         return alert("Please upload your final design image first.");
     }
+    if (!dateInput) {
+        return alert("Please select a date and time to publish this post.");
+    }
 
     const file = fileInput.files[0];
     const reader = new FileReader();
 
     reader.onloadend = async () => {
-        const base64String = reader.result;
-        const btn = document.getElementById('btnApprove');
-        btn.innerHTML = 'Queuing...';
-        btn.disabled = true;
-
-        try {
-            await fetch(`${API_BASE}/posts/${activePostId}/approve`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    image_base64: base64String,
-                    scheduled_date: new Date(dateInput).toISOString()
-                })
-            });
+        // Create a hidden image element to process the compression
+        const img = new Image();
+        img.src = reader.result;
+        
+        img.onload = async () => {
+            // Setup an invisible canvas to resize the image
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1080; // Standard optimal width for Facebook/Instagram
+            let scaleSize = 1;
             
-            closeViewModal();
-            refreshCalendar(); 
-            alert("Post Queued! It will be published at your selected time.");
-        } catch (e) {
-            alert("Error queuing post.");
-        } finally {
-            btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> Approve and Queue';
-            btn.disabled = false;
-        }
+            if (img.width > MAX_WIDTH) {
+                scaleSize = MAX_WIDTH / img.width;
+            }
+            
+            canvas.width = img.width * scaleSize;
+            canvas.height = img.height * scaleSize;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            // Compress the image to an 80% quality JPEG
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+            const btn = document.getElementById('btnApprove');
+            btn.innerHTML = 'Queuing...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE}/posts/${activePostId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        image_base64: compressedBase64,
+                        scheduled_date: new Date(dateInput).toISOString()
+                    })
+                });
+                
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`Server Error: ${res.status} - ${errorText}`);
+                }
+                
+                closeViewModal();
+                refreshCalendar(); 
+                alert("Post Queued! It will be published at your selected time.");
+            } catch (e) {
+                alert("Error queuing post:\n" + e.message);
+                console.error(e);
+            } finally {
+                btn.innerHTML = '<i class="ph-bold ph-check-circle"></i> Approve and Queue';
+                btn.disabled = false;
+            }
+        };
     };
     reader.readAsDataURL(file);
 }
@@ -227,3 +259,4 @@ async function deleteBrand() {
         }
     }
 }
+
