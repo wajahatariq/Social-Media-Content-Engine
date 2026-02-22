@@ -1,10 +1,8 @@
 import os
 import json
-from typing import TypedDict, List
 from langchain_groq import ChatGroq
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
-from langgraph.graph import StateGraph, END
 
 tavily = TavilySearchResults(max_results=3)
 llm = ChatGroq(
@@ -13,104 +11,55 @@ llm = ChatGroq(
     api_key=os.getenv("GROQ_API_KEY")
 )
 
-class AgentState(TypedDict):
-    client_name: str
-    industry: str
-    website: str
-    phone_number: str
-    topics: List[str]
-    research_data: str
-    raw_concept: str
-    visual_idea: str
-    final_caption: str
+async def generate_monthly_calendar(brand_data):
+    # 1. Research phase
+    query = f"latest trends and news in {brand_data['industry']} industry"
+    try:
+        results = tavily.invoke(query)
+        research_context = "\n".join([f"- {r['content']}" for r in results])
+    except:
+        research_context = "Focus on general professional services, client success, and industry standards."
 
-def research_node(state: AgentState):
-    query = f"latest trends related to {', '.join(state['topics'])} in {state['industry']} industry"
-    results = tavily.invoke(query)
-    context = "\n".join([f"- {r['content']}" for r in results])
-    return {"research_data": context}
-
-def strategist_node(state: AgentState):
+    # 2. Bulk Generation phase
     prompt = f"""
-    You are a Content Strategist for {state['client_name']} ({state['industry']}).
-    Topic: {state['topics'][0] if state['topics'] else 'General Trends'}
-    Research: {state['research_data']}
+    You are the Chief Content Officer for {brand_data['name']} ({brand_data['industry']}).
+    Your task is to generate a 1-Month Social Media Calendar containing exactly 12 posts.
     
-    Task: 
-    1. Develop an extremely short core message (strictly 7 to 15 words maximum).
-    2. Suggest a strong visual idea.
+    Industry Research to inspire topics: 
+    {research_context}
     
-    Output MUST be valid JSON exactly like this:
-    {{
-        "raw_concept": "Short message here.",
-        "visual_idea": "Description of the visual graphic"
-    }}
+    For each of the 12 posts, you must invent a unique, specific 'topic' and write a caption. 
+    
+    CAPTION RULES (STRICT):
+    - NO EMOJIS anywhere.
+    - Line 1: A short, punchy sentence (7 to 10 words maximum).
+    - Line 2: A short supporting statement (5 to 8 words maximum).
+    - Line 3: (Leave this line empty)
+    - Line 4: [Creative CTA phrase]: {brand_data['phone_number']}
+    - Line 5: [Creative CTA phrase]: {brand_data['website']}
+    - Line 6: (Leave this line empty)
+    - Line 7: 5 to 8 highly relevant hashtags starting with #.
+
+    Output ONLY a valid JSON array of 12 objects, exactly like this format:
+    [
+        {{
+            "topic": "Name of the specific topic",
+            "visual_idea": "Description of what the graphic designer should draw/create.",
+            "caption": "Line 1\\nLine 2\\n\\nCall today: +1 123-4567\\nVisit us: www.site.com\\n\\n#Tag1 #Tag2"
+        }},
+        ... (11 more)
+    ]
     """
+    
     response = llm.invoke([HumanMessage(content=prompt)])
     
     try:
-        clean_json = response.content.replace("```json", "").replace("```", "")
-        data = json.loads(clean_json)
-        return {
-            "raw_concept": data.get("raw_concept", "Elevate your brand with professional services."), 
-            "visual_idea": data.get("visual_idea", "Professional brand graphic.")
-        }
-    except Exception:
-        return {"raw_concept": "Elevate your brand with our professional services.", "visual_idea": "Professional brand graphic."}
-
-def copywriter_node(state: AgentState):
-    prompt = f"""
-    You are an expert Social Media Copywriter for {state['client_name']}.
-    
-    Take this raw concept from the strategist: {state['raw_concept']}
-    
-    Write the final social media caption STRICTLY following this exact structural pattern. 
-    Do not deviate from this pattern under any circumstances.
-    
-    [Line 1-2]: The short, punchy sentences based on the concept (3-4 sentences)
-    [Line 3]: (Leave this line entirely empty)
-    [Line 4]: [Creative CTA phrase]: {state['phone_number']}
-    [Line 5]: [Creative CTA phrase]: {state['website']}
-    [Line 6]: (Leave this line entirely empty)
-    [Line 7]: 5 to 8 highly relevant hashtags starting with #.
-
-    Constraints:
-    - NO EMOJIS. You are strictly forbidden from outputting emojis in any part of the text.
-    - NO extra introductory or concluding text.
-    - Output ONLY the final text intended for the post.
-    """
-    response = llm.invoke([HumanMessage(content=prompt)])
-    return {"final_caption": response.content.strip()}
-
-workflow = StateGraph(AgentState)
-workflow.add_node("researcher", research_node)
-workflow.add_node("strategist", strategist_node)
-workflow.add_node("copywriter", copywriter_node)
-
-workflow.set_entry_point("researcher")
-workflow.add_edge("researcher", "strategist")
-workflow.add_edge("strategist", "copywriter")
-workflow.add_edge("copywriter", END)
-
-app_workflow = workflow.compile()
-
-async def run_content_agent(inputs):
-    state_input = {
-        "client_name": inputs["client_name"],
-        "industry": inputs["industry"],
-        "website": inputs["website"],
-        "phone_number": inputs.get("phone_number", ""),
-        "topics": inputs.get("topics", []),
-        "research_data": "",
-        "raw_concept": "",
-        "visual_idea": "",
-        "final_caption": ""
-    }
-    
-    result = await app_workflow.ainvoke(state_input)
-    
-    return {
-        "caption": result["final_caption"],
-        "visual_idea": result["visual_idea"]
-    }
-
+        clean_json = response.content.replace("```json", "").replace("```", "").strip()
+        posts = json.loads(clean_json)
+        # Ensure it's a list
+        if not isinstance(posts, list):
+            raise ValueError("AI did not return a list")
+        return posts[:12] # Guarantee we only take 12
+    except Exception as e:
+        print(f"JSON Parsing Error: {e}")
+        return {"error": "Failed to generate monthly calendar properly."}
