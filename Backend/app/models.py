@@ -8,7 +8,8 @@ class Brand(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     name: str
     industry: str
-    website: str
+    website: str = ""        # <--- Added = ""
+    phone_number: str = ""   # <--- Added = ""
     phone_number: str
     tone_voice: str = "Professional"
     facebook_page_id: Optional[str] = None
@@ -37,3 +38,4 @@ class ApproveUpload(BaseModel):
 
 class AutoMonthRequest(BaseModel):
     brand_id: str
+
