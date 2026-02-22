@@ -36,8 +36,8 @@
                     <button class="btn-danger" onclick="deleteBrand()">
                         <i class="ph-bold ph-trash"></i> Delete Brand
                     </button>
-                    <button class="btn-primary" onclick="toggleDraftModal()">
-                        <i class="ph-bold ph-plus"></i> Auto-Generate Post
+                    <button id="btnMonth" class="btn-magic" onclick="generateMonth()">
+                        <i class="ph-bold ph-calendar-plus"></i> Generate 1-Month Plan
                     </button>
                 </div>
             </header>
@@ -70,18 +70,6 @@
         </div>
     </div>
 
-    <div id="draftModal" class="modal hidden">
-        <div class="modal-box">
-            <h3>Auto-Generate New Post</h3>
-            <label>Topic / Focus</label>
-            <input type="text" id="draftTopic" placeholder="e.g., Mascot Logo Trends">
-            <div class="modal-footer">
-                <button onclick="toggleDraftModal()">Cancel</button>
-                <button id="btnDraft" class="btn-primary" onclick="createDraft()">Generate Now</button>
-            </div>
-        </div>
-    </div>
-
     <div id="viewModal" class="modal hidden">
         <div class="modal-box large">
             <div class="badge-row">
@@ -102,7 +90,7 @@
                 <label>1. Upload Final Design</label>
                 <input type="file" id="designUpload" accept="image/png, image/jpeg" style="margin-bottom: 1.5rem;">
                 
-                <label>2. Select Publish Date and Time</label>
+                <label>2. Verify/Edit Publish Date</label>
                 <input type="datetime-local" id="scheduleDate">
             </div>
 
