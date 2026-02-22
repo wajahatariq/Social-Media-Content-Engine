@@ -8,8 +8,6 @@ class Brand(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     name: str
     industry: str
-    website: str = ""       # <--- Add = "" here
-    phone_number: str = ""  # <--- Add = "" here
     website: str
     phone_number: str
     tone_voice: str = "Professional"
@@ -37,7 +35,5 @@ class ApproveUpload(BaseModel):
     image_base64: str
     scheduled_date: datetime
 
-class DraftRequest(BaseModel):
+class AutoMonthRequest(BaseModel):
     brand_id: str
-    topic: str
-
