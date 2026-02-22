@@ -121,41 +121,37 @@ function openPostDetails(event) {
     activePostId = p._id; 
     
     document.getElementById('viewTopic').textContent = p.topic;
+    document.getElementById('viewCaption').innerText = p.caption;
+    document.getElementById('viewVisual').innerText = p.visual_idea;
+    document.getElementById('viewStatus').textContent = p.status;
+    document.getElementById('viewStatus').className = `status-badge ${p.status.toLowerCase()}`;
     
-    // Fix the date display for the badge
+    // Set human-readable date for the badge
     const displayDate = new Date(event.start).toLocaleString();
     document.getElementById('viewDate').textContent = displayDate;
     
-    // Set the hidden date input for approval
+    // Create the string for the datetime-local inputs
     const localDate = new Date(event.start);
     localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
     const dateString = localDate.toISOString().slice(0, 16);
-    document.getElementById('scheduleDate').value = dateString;
 
-    const statusBadge = document.getElementById('viewStatus');
-    statusBadge.textContent = p.status;
-    statusBadge.className = `status-badge ${p.status.toLowerCase()}`;
-    
-    const contentBox = document.getElementById('aiContent');
     const uploadArea = document.getElementById('uploadArea');
     const btnApprove = document.getElementById('btnApprove');
-    const editTimeBox = document.getElementById('editTimeBox'); // Target the new box
+    const editTimeBox = document.getElementById('editTimeBox');
+    const editScheduleInput = document.getElementById('editScheduleDate');
 
-    contentBox.classList.remove('hidden');
-    document.getElementById('viewCaption').innerText = p.caption;
-    document.getElementById('viewVisual').innerText = p.visual_idea;
-    
-    if (p.status !== 'Approved') {
-        uploadArea.classList.remove('hidden');
-        btnApprove.classList.remove('hidden');
-        if(editTimeBox) editTimeBox.classList.add('hidden'); // Hide edit if not approved
-    } else {
+    if (p.status === 'Approved') {
+        // HIDE upload, SHOW edit
         uploadArea.classList.add('hidden');
         btnApprove.classList.add('hidden');
-        if(editTimeBox) {
-            editTimeBox.classList.remove('hidden'); // Show edit for approved posts
-            document.getElementById('editScheduleDate').value = dateString;
-        }
+        editTimeBox.classList.remove('hidden');
+        editScheduleInput.value = dateString;
+    } else {
+        // SHOW upload, HIDE edit
+        uploadArea.classList.remove('hidden');
+        btnApprove.classList.remove('hidden');
+        editTimeBox.classList.add('hidden');
+        document.getElementById('scheduleDate').value = dateString;
     }
     
     document.getElementById('viewModal').classList.remove('hidden');
@@ -302,6 +298,7 @@ async function updateScheduleTime() {
         alert("Error updating time: " + e.message);
     }
 }
+
 
 
 
