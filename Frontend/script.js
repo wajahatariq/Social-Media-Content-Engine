@@ -30,10 +30,24 @@ function initCalendar() {
 async function loadBrands() {
     try {
         const res = await fetch(`${API_BASE}/brands`);
+        
+        // NEW: Check if the backend threw an error
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("Backend Error:", errorText);
+            document.getElementById('brandList').innerHTML = `<p style="color:red; padding:1rem;">Error loading brands. Check console.</p>`;
+            return;
+        }
+
         const brands = await res.json();
         const list = document.getElementById('brandList');
         list.innerHTML = '';
         
+        if (brands.length === 0) {
+            list.innerHTML = `<p style="color:#94a3b8; padding: 1rem; font-size: 0.85rem;">No brands found.</p>`;
+            return;
+        }
+
         brands.forEach(b => {
             const item = document.createElement('div');
             item.className = 'brand-item';
@@ -41,7 +55,9 @@ async function loadBrands() {
             item.onclick = () => selectBrand(b, item);
             list.appendChild(item);
         });
-    } catch(e) { console.error(e); }
+    } catch(e) { 
+        console.error("Network Error:", e); 
+    }
 }
 
 async function selectBrand(brand, el) {
@@ -231,3 +247,4 @@ async function deleteBrand() {
         }
     }
 }
+
