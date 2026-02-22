@@ -86,31 +86,35 @@
             
             <h2 id="viewTopic">Topic Name</h2>
             
-            <div id="aiContent" class="ai-box hidden">
+            <div id="aiContent" class="ai-box">
                 <label>Generated Caption</label>
                 <div id="viewCaption" class="text-block"></div>
                 <label>Visual Direction</label>
                 <div id="viewVisual" class="visual-block"></div>
             </div>
-            <div id="editTimeBox" class="upload-box hidden" style="margin-top: 1rem; border-color: #3b82f6;">
-                <label style="color: #3b82f6;"><i class="ph-bold ph-clock"></i> Reschedule Post</label>
-                <input type="datetime-local" id="editScheduleDate">
-                <button class="btn-primary" onclick="updateScheduleTime()" style="margin-top: 0.5rem; width: 100%; justify-content: center;">
-                    Save New Time
-                </button>
-            </div>
+    
             <div id="uploadArea" class="upload-box hidden">
-                <label>1. Upload Final Design</label>
-                <input type="file" id="designUpload" accept="image/png, image/jpeg" style="margin-bottom: 1.5rem;">
-                
-                <label>2. Verify/Edit Publish Date</label>
+                <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #eee;">
+                <label><strong>1. Upload Design</strong></label>
+                <input type="file" id="designUpload" accept="image/png, image/jpeg">
+                <label style="margin-top:1rem; display:block;"><strong>2. Set Publish Date</strong></label>
                 <input type="datetime-local" id="scheduleDate">
             </div>
-
-            <div class="modal-footer">
+    
+            <div id="editTimeBox" class="hidden" style="margin-top: 1.5rem; padding: 1rem; background: #f0f7ff; border: 1px solid #3b82f6; border-radius: 8px;">
+                <label style="color: #3b82f6; font-weight: 700; display: block; margin-bottom: 0.5rem;">
+                    <i class="ph-bold ph-clock-afternoon"></i> RESCHEDULE POST
+                </label>
+                <input type="datetime-local" id="editScheduleDate" style="width: 100%; margin-bottom: 0.8rem;">
+                <button class="btn-primary" onclick="updateScheduleTime()" style="width: 100%; background: #3b82f6;">
+                    Update Time
+                </button>
+            </div>
+    
+            <div class="modal-footer" style="margin-top: 1.5rem;">
                 <button onclick="closeViewModal()">Close</button>
                 <button id="btnApprove" class="btn-primary hidden" onclick="approveAndQueue()">
-                    <i class="ph-bold ph-check-circle"></i> Approve and Queue
+                    Approve and Queue
                 </button>
             </div>
         </div>
@@ -119,5 +123,6 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
