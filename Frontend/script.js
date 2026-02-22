@@ -22,6 +22,10 @@ function initCalendar() {
         events: [], 
         eventClick: function(info) {
             openPostDetails(info.event);
+        },
+        // --- ADD THIS BLOCK: Listens for clicks on empty days ---
+        dateClick: function(info) {
+            toggleDraftModal();
         }
     });
     calendar.render();
@@ -247,4 +251,5 @@ async function deleteBrand() {
         }
     }
 }
+
 
