@@ -107,6 +107,21 @@ async def approve_post(post_id: str, upload: ApproveUpload):
     except Exception as e:
         raise HTTPException(500, str(e))
 
+# --- NEW: Edit Scheduled Time Endpoint ---
+class UpdateScheduleRequest(BaseModel):
+    scheduled_date: datetime
+
+@app.patch("/api/posts/{post_id}/schedule")
+async def update_post_schedule(post_id: str, req: UpdateScheduleRequest):
+    try:
+        await db.posts.update_one(
+            {"_id": ObjectId(post_id)}, 
+            {"$set": {"scheduled_date": req.scheduled_date}}
+        )
+        return {"status": "Schedule updated"}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+        
 @app.get("/api/cron/publish")
 async def auto_publish_posts():
     now = datetime.now()
@@ -143,3 +158,4 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
+
