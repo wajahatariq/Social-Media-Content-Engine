@@ -121,12 +121,17 @@ function openPostDetails(event) {
     activePostId = p._id; 
     
     document.getElementById('viewTopic').textContent = p.topic;
-    document.getElementById('viewDate').textContent = new Date(event.start).toLocaleString();
     
+    // Fix the date display for the badge
+    const displayDate = new Date(event.start).toLocaleString();
+    document.getElementById('viewDate').textContent = displayDate;
+    
+    // Set the hidden date input for approval
     const localDate = new Date(event.start);
     localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
-    document.getElementById('scheduleDate').value = localDate.toISOString().slice(0, 16);
-    
+    const dateString = localDate.toISOString().slice(0, 16);
+    document.getElementById('scheduleDate').value = dateString;
+
     const statusBadge = document.getElementById('viewStatus');
     statusBadge.textContent = p.status;
     statusBadge.className = `status-badge ${p.status.toLowerCase()}`;
@@ -134,6 +139,7 @@ function openPostDetails(event) {
     const contentBox = document.getElementById('aiContent');
     const uploadArea = document.getElementById('uploadArea');
     const btnApprove = document.getElementById('btnApprove');
+    const editTimeBox = document.getElementById('editTimeBox'); // Target the new box
 
     contentBox.classList.remove('hidden');
     document.getElementById('viewCaption').innerText = p.caption;
@@ -142,9 +148,14 @@ function openPostDetails(event) {
     if (p.status !== 'Approved') {
         uploadArea.classList.remove('hidden');
         btnApprove.classList.remove('hidden');
+        if(editTimeBox) editTimeBox.classList.add('hidden'); // Hide edit if not approved
     } else {
         uploadArea.classList.add('hidden');
         btnApprove.classList.add('hidden');
+        if(editTimeBox) {
+            editTimeBox.classList.remove('hidden'); // Show edit for approved posts
+            document.getElementById('editScheduleDate').value = dateString;
+        }
     }
     
     document.getElementById('viewModal').classList.remove('hidden');
@@ -291,5 +302,6 @@ async function updateScheduleTime() {
         alert("Error updating time: " + e.message);
     }
 }
+
 
 
