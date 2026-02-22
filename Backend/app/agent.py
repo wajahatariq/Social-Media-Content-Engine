@@ -32,8 +32,8 @@ async def generate_monthly_calendar(brand_data):
     
     CAPTION RULES (STRICT):
     - NO EMOJIS anywhere.
-    - Line 1: A short, punchy sentence (7 to 10 words maximum).
-    - Line 2: A short supporting statement (5 to 8 words maximum).
+    - No "-" this mark
+    - Line 1-2: 3-4 punchy sentences related to the topic with supporting statement
     - Line 3: (Leave this line empty)
     - Line 4: [Creative CTA phrase]: {brand_data['phone_number']}
     - Line 5: [Creative CTA phrase]: {brand_data['website']}
@@ -63,3 +63,4 @@ async def generate_monthly_calendar(brand_data):
     except Exception as e:
         print(f"JSON Parsing Error: {e}")
         return {"error": "Failed to generate monthly calendar properly."}
+
