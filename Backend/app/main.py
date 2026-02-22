@@ -153,12 +153,13 @@ async def auto_publish_posts():
             response = await client.post(url, data=data, files=files)
 
             if response.status_code == 200:
-                await db.posts.delete_one({"_id": post["_id"]})
+                # Update status to Published instead of deleting
+                await db.posts.update_one(
+                    {"_id": post["_id"]},
+                    {"$set": {"status": "Published", "is_published": True}}
+                )
                 results.append({"post_id": str(post["_id"]), "status": "success"})
             else:
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
-
-
-
