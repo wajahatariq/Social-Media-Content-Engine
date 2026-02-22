@@ -63,6 +63,13 @@
             <input type="text" id="newBrandPhone" placeholder="Phone Number">
             <input type="text" id="newBrandFbPageId" placeholder="Facebook Page ID (Optional)">
             <input type="text" id="newBrandFbToken" placeholder="Facebook Access Token (Optional)">
+            <div id="editTimeBox" class="upload-box hidden" style="margin-top: 1rem; border: 1px solid #3b82f6; padding: 10px; border-radius: 8px;">
+                <label style="color: #3b82f6; font-weight: 600;"><i class="ph-bold ph-clock"></i> Reschedule Post</label>
+                <input type="datetime-local" id="editScheduleDate" style="margin-top: 0.5rem; width: 100%;">
+                <button class="btn-primary" onclick="updateScheduleTime()" style="margin-top: 0.8rem; width: 100%; background: #3b82f6;">
+                    Save New Time
+                </button>
+            </div>
             <div class="modal-footer">
                 <button onclick="toggleBrandModal()">Cancel</button>
                 <button class="btn-primary" onclick="createBrand()">Create Brand</button>
@@ -112,4 +119,5 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
