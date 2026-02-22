@@ -10,7 +10,6 @@ class Brand(BaseModel):
     industry: str
     website: str = ""        # <--- Added = ""
     phone_number: str = ""   # <--- Added = ""
-    phone_number: str
     tone_voice: str = "Professional"
     facebook_page_id: Optional[str] = None
     facebook_access_token: Optional[str] = None
@@ -38,4 +37,5 @@ class ApproveUpload(BaseModel):
 
 class AutoMonthRequest(BaseModel):
     brand_id: str
+
 
