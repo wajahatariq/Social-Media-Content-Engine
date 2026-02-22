@@ -85,7 +85,13 @@
                 <label>Visual Direction</label>
                 <div id="viewVisual" class="visual-block"></div>
             </div>
-
+            <div id="editTimeBox" class="upload-box hidden" style="margin-top: 1rem; border-color: #3b82f6;">
+                <label style="color: #3b82f6;"><i class="ph-bold ph-clock"></i> Reschedule Post</label>
+                <input type="datetime-local" id="editScheduleDate">
+                <button class="btn-primary" onclick="updateScheduleTime()" style="margin-top: 0.5rem; width: 100%; justify-content: center;">
+                    Save New Time
+                </button>
+            </div>
             <div id="uploadArea" class="upload-box hidden">
                 <label>1. Upload Final Design</label>
                 <input type="file" id="designUpload" accept="image/png, image/jpeg" style="margin-bottom: 1.5rem;">
@@ -106,3 +112,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
