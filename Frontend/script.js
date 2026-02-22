@@ -69,13 +69,26 @@ async function refreshCalendar() {
     const res = await fetch(`${API_BASE}/brands/${activeBrandId}/posts`);
     const posts = await res.json();
     
-    const events = posts.map(p => ({
-        id: p._id,
-        title: p.topic,
-        start: p.scheduled_date,
-        backgroundColor: p.status === 'Approved' ? '#10b981' : '#3b82f6',
-        extendedProps: p
-    }));
+    const events = posts.map(p => {
+        // NEW: Force the browser to recognize the database time as UTC
+        let secureDate = p.scheduled_date;
+        if (!secureDate.endsWith('Z') && !secureDate.includes('+')) {
+            secureDate += 'Z'; 
+        }
+        p.scheduled_date = secureDate; // Update it for the View Modal too
+        
+        return {
+            id: p._id,
+            title: p.topic,
+            start: secureDate,
+            backgroundColor: p.status === 'Approved' ? '#10b981' : '#3b82f6',
+            extendedProps: p
+        };
+    });
+    
+    calendar.removeAllEvents();
+    calendar.addEventSource(events);
+}
     
     calendar.removeAllEvents();
     calendar.addEventSource(events);
@@ -259,4 +272,5 @@ async function deleteBrand() {
         }
     }
 }
+
 
