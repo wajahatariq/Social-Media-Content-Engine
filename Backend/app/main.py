@@ -1,14 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
-from .models import Brand, SocialPost, ApproveUpload, DraftRequest
+from .models import Brand, SocialPost, ApproveUpload, AutoMonthRequest
 from .database import db, get_db_status
-from .agent import run_content_agent
+from .agent import generate_monthly_calendar
 from bson import ObjectId
 import logging
 import httpx
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -47,40 +47,50 @@ async def delete_brand(brand_id: str):
 async def get_posts(brand_id: str):
     return await db.posts.find({"brand_id": brand_id}).to_list(1000)
 
-@app.post("/api/posts/draft")
-async def auto_draft_post(req: DraftRequest):
+@app.post("/api/posts/generate_month")
+async def generate_month(req: AutoMonthRequest):
     try:
         brand = await db.brands.find_one({"_id": ObjectId(req.brand_id)})
-        
-        agent_input = {
-            "client_name": brand['name'],
-            "industry": brand['industry'],
-            "website": brand['website'],
-            "phone_number": brand.get('phone_number', ''),
-            "topics": [req.topic] 
-        }
-        
-        generated = await run_content_agent(agent_input)
-        
-        if "error" in generated:
-            raise HTTPException(500, "AI Generation Failed")
+        if not brand:
+            raise HTTPException(404, "Brand not found")
 
-        post = SocialPost(
-            brand_id=req.brand_id,
-            topic=req.topic,
-            scheduled_date=datetime.now(),
-            caption=generated['caption'],
-            visual_idea=generated['visual_idea'],
-            status="Generated"
-        )
+        # Call the bulk AI agent
+        generated_posts = await generate_monthly_calendar({
+            "name": brand['name'],
+            "industry": brand['industry'],
+            "website": brand.get('website', ''),
+            "phone_number": brand.get('phone_number', '')
+        })
+
+        if isinstance(generated_posts, dict) and "error" in generated_posts:
+            raise HTTPException(500, "AI Generation Failed. Try again.")
+
+        # Schedule logic: 3 posts per week for 4 weeks (Days 1, 3, 5, 8, 10, 12...)
+        day_offsets = [1, 3, 5, 8, 10, 12, 15, 17, 19, 22, 24, 26]
+        base_date = datetime.now().replace(hour=10, minute=0, second=0, microsecond=0)
         
-        res = await db.posts.insert_one(post.model_dump(by_alias=True, exclude=["id"]))
-        post_data = post.model_dump(by_alias=True)
-        post_data["_id"] = str(res.inserted_id)
-        return post_data
+        saved_posts = []
+        for i, post_data in enumerate(generated_posts):
+            if i >= 12: break # Failsafe
+            
+            scheduled_time = base_date + timedelta(days=day_offsets[i])
+            
+            new_post = SocialPost(
+                brand_id=req.brand_id,
+                topic=post_data.get('topic', 'Brand Highlight'),
+                scheduled_date=scheduled_time,
+                caption=post_data.get('caption', ''),
+                visual_idea=post_data.get('visual_idea', ''),
+                status="Generated"
+            )
+            
+            res = await db.posts.insert_one(new_post.model_dump(by_alias=True, exclude=["id"]))
+            saved_posts.append(str(res.inserted_id))
+
+        return {"status": "success", "generated_count": len(saved_posts)}
 
     except Exception as e:
-        logger.error(f"Error: {e}")
+        logger.error(f"Bulk Error: {e}")
         raise HTTPException(500, str(e))
 
 @app.post("/api/posts/{post_id}/approve")
