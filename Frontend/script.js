@@ -89,11 +89,6 @@ async function refreshCalendar() {
     calendar.removeAllEvents();
     calendar.addEventSource(events);
 }
-    
-    calendar.removeAllEvents();
-    calendar.addEventSource(events);
-}
-
 // THE NEW ONE-CLICK GENERATOR
 async function generateMonth() {
     if(!activeBrandId) return;
@@ -296,4 +291,5 @@ async function updateScheduleTime() {
         alert("Error updating time: " + e.message);
     }
 }
+
 
