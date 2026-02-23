@@ -85,6 +85,7 @@ async def generate_month(req: AutoMonthRequest):
             
             # Calculate the specific date for this post
             scheduled_time = base_date + timedelta(days=day_offsets[i])
+            scheduled_time = scheduled_time.replace(tzinfo=None
             raw_visual_direction = post_data.get('visual_idea', '')
 
             # 4. Construct the automated God-Tier Prompt
@@ -188,6 +189,7 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
+
 
 
 
