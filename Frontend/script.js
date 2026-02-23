@@ -66,35 +66,30 @@ async function selectBrand(brand, el) {
 
 async function refreshCalendar() {
     if (!activeBrandId) return;
-    try {
-        const res = await fetch(`${API_BASE}/brands/${activeBrandId}/posts`);
-        const posts = await res.json();
+    const res = await fetch(`${API_BASE}/brands/${activeBrandId}/posts`);
+    const posts = await res.json();
+    
+    const events = posts.map(p => {
+        // 1. Take the date exactly as it comes from the DB
+        let dbDate = p.scheduled_date; 
+
+        // 2. Remove the 'Z' and the milliseconds to stop browser math
+        // This ensures "06:03" stays "06:03"
+        let cleanDate = dbDate.split('.')[0].replace('Z', ''); 
         
-        const events = posts.map(p => {
-            // 1. Get the raw date from the database (e.g., "2026-02-23T06:02:00.000Z")
-            let rawDate = p.scheduled_date;
-            
-            // 2. Strip the 'Z' and any millisecond data.
-            // This prevents the browser from shifting the time by 5 hours.
-            let displayDate = rawDate.split('.')[0].replace('Z', ''); 
-            
-            // 3. Update the post object so the View Modal also uses the clean time
-            p.scheduled_date = displayDate; 
-            
-            return {
-                id: p._id,
-                title: p.topic,
-                start: displayDate, // FullCalendar will now show exactly your system time
-                backgroundColor: p.status === 'Approved' ? '#10b981' : '#3b82f6',
-                extendedProps: p
-            };
-        });
-        
-        calendar.removeAllEvents();
-        calendar.addEventSource(events);
-    } catch (error) {
-        console.error("Error refreshing calendar:", error);
-    }
+        p.scheduled_date = cleanDate; 
+
+        return {
+            id: p._id,
+            title: p.topic,
+            start: cleanDate, 
+            backgroundColor: p.status === 'Approved' ? '#10b981' : '#3b82f6',
+            extendedProps: p
+        };
+    });
+    
+    calendar.removeAllEvents();
+    calendar.addEventSource(events);
 }
 // THE NEW ONE-CLICK GENERATOR
 async function generateMonth() {
@@ -331,6 +326,7 @@ function copyAutomatedPrompt() {
         alert("Failed to copy to clipboard.");
     });
 }
+
 
 
 
