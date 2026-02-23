@@ -70,18 +70,35 @@ async def generate_month(req: AutoMonthRequest):
         day_offsets = [1, 3, 5, 8, 10, 12, 15, 17, 19, 22, 24, 26]
         base_date = datetime.now().replace(hour=10, minute=0, second=0, microsecond=0)
         
+        # --- NEW: Extract brand details for the God-Tier prompt ---
+        brand_name = brand.get("name", "the brand")
+        brand_colors = brand.get("colors", "its primary brand colors")
+        website = brand.get("website", f"www.{brand_name.replace(' ', '').lower()}.com")
+        
         saved_posts = []
         for i, post_data in enumerate(generated_posts):
             if i >= 12: break # Failsafe
             
             scheduled_time = base_date + timedelta(days=day_offsets[i])
+            raw_visual_direction = post_data.get('visual_idea', '')
+
+            # --- NEW: Construct the automated God-Tier Prompt ---
+            ai_prompt = (
+                f"Generate a professional corporate social media post image for '{brand_name}'. "
+                f"Visual Theme: {raw_visual_direction}. "
+                f"The overall color scheme must strictly follow the brand colors: {brand_colors}. "
+                f"Place the official '{brand_name}' logo clearly in the top right corner. "
+                f"Render the website text '{website}' with flawless typography in the bottom center. "
+                f"If the request is specifically to generate a logo, always generate it on a transparent background."
+            )
             
             new_post = SocialPost(
                 brand_id=req.brand_id,
                 topic=post_data.get('topic', 'Brand Highlight'),
                 scheduled_date=scheduled_time,
                 caption=post_data.get('caption', ''),
-                visual_idea=post_data.get('visual_idea', ''),
+                visual_idea=raw_visual_direction,
+                ai_prompt=ai_prompt,  # --- NEW: Save it to the database ---
                 status="Generated"
             )
             
@@ -163,3 +180,4 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
+
