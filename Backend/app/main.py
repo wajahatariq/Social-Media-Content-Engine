@@ -88,6 +88,7 @@ async def generate_month(req: AutoMonthRequest):
                 f"Place the official '{brand_name}' logo clearly in the top right corner. "
                 f"Render the website text '{website}' with flawless typography in the bottom center. "
                 f"The overall post scheme(corporate, comic, minimal) must also follow the brand scheme."
+                f"Post Size: 1080x1080"
             )
             new_post = SocialPost(
                 brand_id=req.brand_id,
@@ -177,6 +178,7 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
+
 
 
 
