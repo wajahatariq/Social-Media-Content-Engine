@@ -151,10 +151,16 @@ async def update_post_schedule(post_id: str, req: UpdateScheduleRequest):
         
 @app.get("/api/cron/publish")
 async def auto_publish_posts():
-    now = datetime.now()
+    # 1. Get the exact current time in Pakistan Standard Time
+    pkt = pytz.timezone('Asia/Karachi')
+    
+    # 2. Strip the timezone so it matches the "Floating Time" in your database
+    now_pkt = datetime.now(pkt).replace(tzinfo=None)
+    
+    # 3. Query the database using the matched PKT time
     posts_to_publish = await db.posts.find({
         "status": "Approved", 
-        "scheduled_date": {"$lte": now}
+        "scheduled_date": {"$lte": now_pkt}
     }).to_list(100)
 
     results = []
@@ -179,7 +185,6 @@ async def auto_publish_posts():
             response = await client.post(url, data=data, files=files)
 
             if response.status_code == 200:
-                # Update status to Published instead of deleting
                 await db.posts.update_one(
                     {"_id": post["_id"]},
                     {"$set": {"status": "Published", "is_published": True}}
@@ -189,11 +194,3 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
-
-
-
-
-
-
-
-
