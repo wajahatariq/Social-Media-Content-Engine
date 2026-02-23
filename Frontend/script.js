@@ -120,31 +120,27 @@ function openPostDetails(event) {
     const p = event.extendedProps;
     activePostId = p._id; 
     
-// Populate the content fields
+    // 1. Set the standard text fields
     document.getElementById('viewTopic').textContent = p.topic;
-    document.getElementById('viewCaption').innerText = p.caption || "No caption generated.";
+    document.getElementById('viewCaption').innerText = p.caption;
+    document.getElementById('viewStatus').textContent = p.status;
+    document.getElementById('viewStatus').className = `status-badge ${p.status.toLowerCase()}`;
     
-    // NEW: Inject the God-Tier Prompt into the textarea
-    // Fallback to visual_idea if it's an old post without an ai_prompt
+    // 2. NEW: Inject the God-Tier Prompt into the new textarea
+    // We check if it exists first so it never "crashes" the script again
     const promptBox = document.getElementById('viewPrompt');
     if (promptBox) {
         promptBox.value = p.ai_prompt || p.visual_idea || "No prompt available.";
     }
 
-    // This handles the old visual direction display if you kept it in the HTML
-    const visualBox = document.getElementById('viewVisual');
-    if (visualBox) {
-        visualBox.innerText = p.visual_idea || "No visual direction provided.";
-    }
-    document.getElementById('viewVisual').innerText = p.visual_idea;
-    document.getElementById('viewStatus').textContent = p.status;
-    document.getElementById('viewStatus').className = `status-badge ${p.status.toLowerCase()}`;
-    
-    // Set human-readable date for the badge
+    // 3. REMOVE OR COMMENT OUT THIS LINE IF IT EXISTS:
+    // document.getElementById('viewVisual').innerText = p.visual_idea; 
+    // ^ This was the line causing the "null" error!
+
+    // 4. Handle dates
     const displayDate = new Date(event.start).toLocaleString();
     document.getElementById('viewDate').textContent = displayDate;
     
-    // Create the string for the datetime-local inputs
     const localDate = new Date(event.start);
     localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
     const dateString = localDate.toISOString().slice(0, 16);
@@ -155,22 +151,20 @@ function openPostDetails(event) {
     const editScheduleInput = document.getElementById('editScheduleDate');
 
     if (p.status === 'Approved') {
-        // HIDE upload, SHOW edit
         uploadArea.classList.add('hidden');
         btnApprove.classList.add('hidden');
         editTimeBox.classList.remove('hidden');
         editScheduleInput.value = dateString;
     } else {
-        // SHOW upload, HIDE edit
         uploadArea.classList.remove('hidden');
         btnApprove.classList.remove('hidden');
         editTimeBox.classList.add('hidden');
         document.getElementById('scheduleDate').value = dateString;
     }
     
+    // 5. Finally, show the modal
     document.getElementById('viewModal').classList.remove('hidden');
 }
-
 async function approveAndQueue() {
     const fileInput = document.getElementById('designUpload');
     const dateInput = document.getElementById('scheduleDate').value;
@@ -330,6 +324,7 @@ function copyAutomatedPrompt() {
         alert("Failed to copy to clipboard.");
     });
 }
+
 
 
 
