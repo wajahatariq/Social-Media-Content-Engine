@@ -72,7 +72,6 @@ async def generate_month(req: AutoMonthRequest):
         
         # --- NEW: Extract brand details for the God-Tier prompt ---
         brand_name = brand.get("name", "the brand")
-        brand_colors = brand.get("colors", "its primary brand colors")
         website = brand.get("website", f"www.{brand_name.replace(' ', '').lower()}.com")
         
         saved_posts = []
@@ -81,16 +80,15 @@ async def generate_month(req: AutoMonthRequest):
             
             scheduled_time = base_date + timedelta(days=day_offsets[i])
             raw_visual_direction = post_data.get('visual_idea', '')
-
-            # --- NEW: Construct the automated God-Tier Prompt ---
+            # --- UPDATED: Construct the automated God-Tier Prompt ---
             ai_prompt = (
                 f"Generate a professional corporate social media post image for '{brand_name}'. "
                 f"Visual Theme: {raw_visual_direction}. "
-                f"The overall color scheme must strictly follow the brand colors: {brand_colors}. "
+                f"**COLOR INSTRUCTION: Match the color scheme exactly to the '{brand_name}' logo provided in this chat.** "
                 f"Place the official '{brand_name}' logo clearly in the top right corner. "
                 f"Render the website text '{website}' with flawless typography in the bottom center. "
+                f"The overall post scheme(corporate, comic, minimal) must also follow the brand scheme."
             )
-            
             new_post = SocialPost(
                 brand_id=req.brand_id,
                 topic=post_data.get('topic', 'Brand Highlight'),
@@ -179,5 +177,6 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
+
 
 
