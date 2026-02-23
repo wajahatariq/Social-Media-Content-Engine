@@ -72,7 +72,7 @@ async def generate_month(req: AutoMonthRequest):
         day_offsets = [1, 3, 5, 8, 10, 12, 15, 17, 19, 22, 24, 26]
         
         # Get current time in PKT and lock the start time to 3:00 PM
-        base_date = datetime.now(pkt).replace(hour=15, minute=0, second=0, microsecond=0)
+        base_date = datetime.now(pkt)
         
         brand_name = brand.get("name", "the brand")
         website = brand.get("website", f"www.{brand_name.replace(' ', '').lower()}.com")
@@ -188,6 +188,7 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
+
 
 
 
