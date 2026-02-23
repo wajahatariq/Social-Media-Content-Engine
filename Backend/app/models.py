@@ -22,6 +22,7 @@ class SocialPost(BaseModel):
     brand_id: str
     topic: str
     scheduled_date: datetime
+    ai_prompt: Optional[str] = ""
     caption: Optional[str] = None
     visual_idea: Optional[str] = None
     image_base64: Optional[str] = None  
@@ -37,5 +38,6 @@ class ApproveUpload(BaseModel):
 
 class AutoMonthRequest(BaseModel):
     brand_id: str
+
 
 
