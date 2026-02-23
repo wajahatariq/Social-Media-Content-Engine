@@ -89,7 +89,6 @@ async def generate_month(req: AutoMonthRequest):
                 f"The overall color scheme must strictly follow the brand colors: {brand_colors}. "
                 f"Place the official '{brand_name}' logo clearly in the top right corner. "
                 f"Render the website text '{website}' with flawless typography in the bottom center. "
-                f"If the request is specifically to generate a logo, always generate it on a transparent background."
             )
             
             new_post = SocialPost(
@@ -180,4 +179,5 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
+
 
