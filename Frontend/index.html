@@ -89,8 +89,16 @@
             <div id="aiContent" class="ai-box">
                 <label>Generated Caption</label>
                 <div id="viewCaption" class="text-block"></div>
-                <label>Visual Direction</label>
-                <div id="viewVisual" class="visual-block"></div>
+                
+                <label style="margin-top: 15px; display: block; font-weight: bold; color: #374151;">God-Tier AI Prompt</label>
+                <textarea id="viewPrompt" readonly style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 4px; font-family: monospace; background-color: #f9fafb; resize: vertical; min-height: 100px; margin-top: 5px;"></textarea>
+                
+                <div style="margin-top: 8px; margin-bottom: 10px;">
+                    <button onclick="copyAutomatedPrompt()" style="padding: 6px 12px; background-color: #2563eb; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 13px;">
+                        <i class="ph-bold ph-copy"></i> Copy Prompt
+                    </button>
+                    <span id="promptCopyStatus" style="color: #16a34a; font-weight: bold; font-size: 13px; margin-left: 10px; display: none;">Copied!</span>
+                </div>
             </div>
     
             <div id="uploadArea" class="upload-box hidden">
@@ -123,6 +131,7 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
