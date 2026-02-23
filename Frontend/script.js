@@ -299,6 +299,23 @@ async function updateScheduleTime() {
     }
 }
 
+// --- NEW: Copy AI Prompt Function ---
+function copyAutomatedPrompt() {
+    const copyText = document.getElementById("viewPrompt");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); // For mobile compatibility
+
+    navigator.clipboard.writeText(copyText.value).then(() => {
+        const status = document.getElementById("promptCopyStatus");
+        status.style.display = "inline";
+        setTimeout(() => {
+            status.style.display = "none";
+        }, 2000);
+    }).catch(err => {
+        console.error("Failed to copy text: ", err);
+        alert("Failed to copy to clipboard.");
+    });
+}
 
 
 
