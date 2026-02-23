@@ -210,12 +210,16 @@ async function approveAndQueue() {
             btn.disabled = true;
 
             try {
+                // We add ":00" to the end so FastAPI parses the seconds perfectly, 
+                // but we DO NOT use toISOString() so it stays exactly as you typed it.
+                const exactLocalTime = dateInput.length === 16 ? dateInput + ":00" : dateInput;
+                
                 const res = await fetch(`${API_BASE}/posts/${activePostId}/approve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         image_base64: compressedBase64,
-                        scheduled_date: new Date(dateInput).toISOString()
+                        scheduled_date: exactLocalTime
                     })
                 });
                 
@@ -286,16 +290,19 @@ async function deleteBrand() {
 }
 
 // --- NEW: Reschedule Function ---
+// --- NEW: Reschedule Function ---
 async function updateScheduleTime() {
     const newDateInput = document.getElementById('editScheduleDate').value;
     if(!newDateInput) return alert("Please select a date and time.");
 
     try {
+        const exactLocalTime = newDateInput.length === 16 ? newDateInput + ":00" : newDateInput;
+
         const res = await fetch(`${API_BASE}/posts/${activePostId}/schedule`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                scheduled_date: new Date(newDateInput).toISOString() 
+                scheduled_date: exactLocalTime 
             })
         });
         
@@ -308,7 +315,6 @@ async function updateScheduleTime() {
         alert("Error updating time: " + e.message);
     }
 }
-
 // --- NEW: Copy AI Prompt Function ---
 function copyAutomatedPrompt() {
     const copyText = document.getElementById("viewPrompt");
@@ -326,6 +332,7 @@ function copyAutomatedPrompt() {
         alert("Failed to copy to clipboard.");
     });
 }
+
 
 
 
