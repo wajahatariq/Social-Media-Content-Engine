@@ -120,8 +120,22 @@ function openPostDetails(event) {
     const p = event.extendedProps;
     activePostId = p._id; 
     
+// Populate the content fields
     document.getElementById('viewTopic').textContent = p.topic;
-    document.getElementById('viewCaption').innerText = p.caption;
+    document.getElementById('viewCaption').innerText = p.caption || "No caption generated.";
+    
+    // NEW: Inject the God-Tier Prompt into the textarea
+    // Fallback to visual_idea if it's an old post without an ai_prompt
+    const promptBox = document.getElementById('viewPrompt');
+    if (promptBox) {
+        promptBox.value = p.ai_prompt || p.visual_idea || "No prompt available.";
+    }
+
+    // This handles the old visual direction display if you kept it in the HTML
+    const visualBox = document.getElementById('viewVisual');
+    if (visualBox) {
+        visualBox.innerText = p.visual_idea || "No visual direction provided.";
+    }
     document.getElementById('viewVisual').innerText = p.visual_idea;
     document.getElementById('viewStatus').textContent = p.status;
     document.getElementById('viewStatus').className = `status-badge ${p.status.toLowerCase()}`;
@@ -316,6 +330,7 @@ function copyAutomatedPrompt() {
         alert("Failed to copy to clipboard.");
     });
 }
+
 
 
 
