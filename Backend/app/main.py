@@ -10,6 +10,7 @@ import logging
 import httpx
 import base64
 from datetime import datetime, timedelta
+import pytz
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,7 +56,7 @@ async def generate_month(req: AutoMonthRequest):
         if not brand:
             raise HTTPException(404, "Brand not found")
 
-        # Call the bulk AI agent
+        # 1. Call the AI agent to get the raw ideas
         generated_posts = await generate_monthly_calendar({
             "name": brand['name'],
             "industry": brand['industry'],
@@ -65,41 +66,50 @@ async def generate_month(req: AutoMonthRequest):
 
         if isinstance(generated_posts, dict) and "error" in generated_posts:
             raise HTTPException(500, "AI Generation Failed. Try again.")
-
-        # Schedule logic: 3 posts per week for 4 weeks (Days 1, 3, 5, 8, 10, 12...)
+            
+        # 2. Setup Timezone (Pakistan Standard Time)
+        pkt = pytz.timezone('Asia/Karachi')
         day_offsets = [1, 3, 5, 8, 10, 12, 15, 17, 19, 22, 24, 26]
-        base_date = datetime.now().replace(hour=10, minute=0, second=0, microsecond=0)
         
-        # --- NEW: Extract brand details for the God-Tier prompt ---
+        # Get current time in PKT and lock the start time to 3:00 PM
+        base_date = datetime.now(pkt).replace(hour=15, minute=0, second=0, microsecond=0)
+        
         brand_name = brand.get("name", "the brand")
         website = brand.get("website", f"www.{brand_name.replace(' ', '').lower()}.com")
         
         saved_posts = []
+        
+        # 3. SINGLE LOOP: Process and Save
         for i, post_data in enumerate(generated_posts):
             if i >= 12: break # Failsafe
             
+            # Calculate the specific date for this post
             scheduled_time = base_date + timedelta(days=day_offsets[i])
             raw_visual_direction = post_data.get('visual_idea', '')
-            # --- UPDATED: Construct the automated God-Tier Prompt ---
+
+            # 4. Construct the automated God-Tier Prompt
             ai_prompt = (
                 f"Generate a professional corporate social media post image for '{brand_name}'. "
                 f"Visual Theme: {raw_visual_direction}. "
                 f"**COLOR INSTRUCTION: Match the color scheme exactly to the '{brand_name}' logo provided in this chat.** "
                 f"Place the official '{brand_name}' logo clearly in the top right corner. "
                 f"Render the website text '{website}' with flawless typography in the bottom center. "
-                f"The overall post scheme(corporate, comic, minimal) must also follow the brand scheme."
+                f"The overall post scheme (corporate, comic, minimal) must also follow the brand scheme. "
                 f"Post Size: 1080x1080"
             )
+
+            # 5. Create the post object
             new_post = SocialPost(
                 brand_id=req.brand_id,
                 topic=post_data.get('topic', 'Brand Highlight'),
                 scheduled_date=scheduled_time,
                 caption=post_data.get('caption', ''),
                 visual_idea=raw_visual_direction,
-                ai_prompt=ai_prompt,  # --- NEW: Save it to the database ---
+                ai_prompt=ai_prompt,
                 status="Generated"
             )
             
+            # 6. Save to MongoDB
             res = await db.posts.insert_one(new_post.model_dump(by_alias=True, exclude=["id"]))
             saved_posts.append(str(res.inserted_id))
 
@@ -178,6 +188,7 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
+
 
 
 
