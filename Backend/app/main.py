@@ -90,12 +90,16 @@ async def generate_month(req: AutoMonthRequest):
 
             # 4. Construct the automated God-Tier Prompt
             ai_prompt = (
-                f"Generate a professional corporate social media post image for '{brand_name}'. "
-                f"Visual Theme: {raw_visual_direction}. "
-                f"**COLOR INSTRUCTION: Match the color scheme exactly to the '{brand_name}' logo provided in this chat.** "
-                f"Place the official '{brand_name}' logo clearly in the top right corner. "
-                f"Render the website text '{website}' with flawless typography in the bottom center. "
-                f"The overall post scheme (corporate, comic, minimal) must also follow the brand scheme. "
+                f"Generate a highly creative and visually striking social media post image for '{brand_name}'.\n\n"
+                f"CORE VISUAL CONCEPT: {raw_visual_direction}\n\n"
+                f"CREATIVE DIRECTION (CRITICAL): Do not use generic, standard, or repetitive layouts. "
+                f"You must explore dynamic angles, fresh compositions, and imaginative visual metaphors specifically tailored to the core concept above. "
+                f"The artwork must look entirely distinct and unique compared to previous posts, using creative element placement to stand out.\n\n"
+                f"NON-NEGOTIABLE BRANDING RULES:\n"
+                f"1. COLOR SCHEME: Match the color palette exactly to the '{brand_name}' logo provided in this chat.\n"
+                f"2. LOGO PLACEMENT: Place the official '{brand_name}' logo clearly in the top right corner.\n"
+                f"3. WEBSITE PLACEMENT: Render the website text '{website}' with flawless typography perfectly centered at the bottom.\n"
+                f"4. BRAND VIBE: The overarching aesthetic (corporate, comic, minimal, etc.) must match the brand's identity while remaining highly creative.\n\n"
                 f"Post Size: 1080x1080"
             )
 
@@ -194,3 +198,4 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
 
     return {"processed": len(results), "details": results}
+
