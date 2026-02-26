@@ -105,11 +105,17 @@
     
             <div id="editTimeBox" class="hidden" style="margin-top: 1.5rem; padding: 1rem; background: #f0f7ff; border: 1px solid #3b82f6; border-radius: 8px;">
                 <label style="color: #3b82f6; font-weight: 700; display: block; margin-bottom: 0.5rem;">
-                    <i class="ph-bold ph-clock-afternoon"></i> RESCHEDULE POST
+                    <i class="ph-bold ph-pencil-simple"></i> EDIT POST
                 </label>
+                
+                <label id="lblEditImage" style="display:block; font-size: 0.9rem; margin-bottom: 0.2rem; margin-top: 0.5rem;"><strong>Replace Image (Optional)</strong></label>
+                <input type="file" id="editDesignUpload" accept="image/png, image/jpeg" style="margin-bottom: 1rem;">
+                
+                <label style="display:block; font-size: 0.9rem; margin-bottom: 0.2rem;"><strong>Reschedule Date</strong></label>
                 <input type="datetime-local" id="editScheduleDate" style="width: 100%; margin-bottom: 0.8rem;">
-                <button class="btn-primary" onclick="updateScheduleTime()" style="width: 100%; background: #3b82f6;">
-                    Update Time
+                
+                <button class="btn-primary" onclick="updatePostDetails()" style="width: 100%; background: #3b82f6; justify-content: center;">
+                    Save Changes
                 </button>
             </div>
     
@@ -125,3 +131,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
