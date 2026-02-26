@@ -90,19 +90,18 @@ async def generate_month(req: AutoMonthRequest):
 
             # 4. Construct the automated God-Tier Prompt
             ai_prompt = (
-                f"Create a high-fidelity, professional social media graphic for '{brand_name}' at 1080x1080 resolution.\n\n"
+                f"Generate a highly creative, corporate-style social media post template for '{brand_name}'.\n\n"
                 f"CORE VISUAL CONCEPT: {raw_visual_direction}\n\n"
-                f"ARTISTIC EXECUTION: Do not use generic, flat, or repetitive layouts. "
-                f"Utilize dynamic camera angles (low angle, wide-shot, or macro), depth of field, and imaginative visual metaphors "
-                f"specifically tailored to the concept above. The composition must be distinct and asymmetrical to stand out from standard templates.\n\n"
-                f"TEXT REQUIREMENTS: Incorporate exactly 5-6 words of high-impact, legible text integrated naturally into the scene. "
-                f"Avoid cluttered or distorted lettering.\n\n"
-                f"STRICT BRANDING GUIDELINES:\n"
-                f"1. COLOR PALETTE: Apply the exact color scheme from the '{brand_name}' logo provided. Maintain color harmony across all elements.\n"
-                f"2. LOGO INTEGRATION: Render the '{brand_name}' logo clearly and professionally in the top right corner.\n"
-                f"3. WEBSITE FOOTER: Render the URL '{website}' in clean, minimalist typography, perfectly centered at the bottom of the frame.\n"
-                f"4. BRAND IDENTITY: The overall aesthetic must reflect the '{brand_name}' core identity—ensuring the lighting, textures, and mood (e.g., sleek corporate, vibrant creative, or gritty industrial) are consistent with the brand vibe.\n\n"
-                f"QUALITY TAGS: Cinematic lighting, 8k resolution, hyper-realistic textures, studio quality, no distorted limbs, no blurry text."
+                f"CREATIVE DIRECTION (CRITICAL): Do not use 3D renders, photorealism, or cluttered illustrative scenes. "
+                f"Focus on a sleek, modern 2D graphic design aesthetic. You must explore fresh vector compositions, clean geometric layouts, and imaginative visual metaphors specifically tailored to the core concept above. "
+                f"The artwork must look entirely distinct and unique compared to previous posts, using creative element placement to stand out.\n\n"
+                f"NON-NEGOTIABLE BRANDING RULES:\n"
+                f"1. HEADING TEXT: You MUST seamlessly integrate a punchy 6-7 word heading into the visual design. Make the typography bold, professional, and easy to read.\n"
+                f"2. COLOR SCHEME: Match the color palette exactly to the '{brand_name}' logo provided in this chat.\n"
+                f"3. LOGO PLACEMENT: Place the official '{brand_name}' logo clearly in the top right corner.\n"
+                f"4. WEBSITE PLACEMENT: Render the website text '{website}' with flawless typography perfectly centered at the bottom.\n"
+                f"5. BRAND VIBE: The overarching aesthetic must be sleek, corporate, and professional while remaining highly creative.\n\n"
+                f"Post Size: 1080x1080"
             )
 
             # 5. Create the post object
@@ -221,3 +220,4 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "error", "error": str(e)})
 
     return {"processed": len(results), "details": results}
+
