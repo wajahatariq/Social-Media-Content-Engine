@@ -163,18 +163,26 @@ async def auto_publish_posts():
     # 2. Strip the timezone so it matches the "Floating Time" in your database
     now_pkt = datetime.now(pkt).replace(tzinfo=None)
     
-    # 3. Query the database using the matched PKT time
+    # Limit to 5 posts at a time to prevent Vercel Serverless execution timeouts
     posts_to_publish = await db.posts.find({
         "status": "Approved", 
         "scheduled_date": {"$lte": now_pkt}
-    }).to_list(100)
+    }).to_list(5)
 
     results = []
-    async with httpx.AsyncClient() as client:
+    
+    # Increase httpx timeout to 60 seconds to allow large image uploads
+    async with httpx.AsyncClient(timeout=60.0) as client:
         for post in posts_to_publish:
             brand = await db.brands.find_one({"_id": ObjectId(post["brand_id"])})
             if not brand or not brand.get("facebook_access_token"):
                 continue
+
+            # LOCK THE POST: Update status immediately so retries do not pick it up
+            await db.posts.update_one(
+                {"_id": post["_id"]},
+                {"$set": {"status": "Publishing"}}
+            )
 
             image_data = post["image_base64"]
             if "," in image_data:
@@ -188,17 +196,28 @@ async def auto_publish_posts():
                 'access_token': brand['facebook_access_token']
             }
 
-            response = await client.post(url, data=data, files=files)
+            try:
+                response = await client.post(url, data=data, files=files)
 
-            if response.status_code == 200:
+                if response.status_code == 200:
+                    await db.posts.update_one(
+                        {"_id": post["_id"]},
+                        {"$set": {"status": "Published", "is_published": True}}
+                    )
+                    results.append({"post_id": str(post["_id"]), "status": "success"})
+                else:
+                    # Revert to Approved if Facebook API explicitly rejected it
+                    await db.posts.update_one(
+                        {"_id": post["_id"]},
+                        {"$set": {"status": "Approved"}}
+                    )
+                    results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
+            except Exception as e:
+                # Revert to Approved if the request timed out entirely
                 await db.posts.update_one(
                     {"_id": post["_id"]},
-                    {"$set": {"status": "Published", "is_published": True}}
+                    {"$set": {"status": "Approved"}}
                 )
-                results.append({"post_id": str(post["_id"]), "status": "success"})
-            else:
-                results.append({"post_id": str(post["_id"]), "status": "failed", "error": response.text})
+                results.append({"post_id": str(post["_id"]), "status": "error", "error": str(e)})
 
     return {"processed": len(results), "details": results}
-
-
