@@ -63,7 +63,13 @@
             <input type="text" id="newBrandPhone" placeholder="Phone Number">
             <input type="text" id="newBrandFbPageId" placeholder="Facebook Page ID (Optional)">
             <input type="text" id="newBrandFbToken" placeholder="Facebook Access Token (Optional)">
-            
+            <div id="editTimeBox" class="upload-box hidden" style="margin-top: 1rem; border: 1px solid #3b82f6; padding: 10px; border-radius: 8px;">
+                <label style="color: #3b82f6; font-weight: 600;"><i class="ph-bold ph-clock"></i> Reschedule Post</label>
+                <input type="datetime-local" id="editScheduleDate" style="margin-top: 0.5rem; width: 100%;">
+                <button class="btn-primary" onclick="updateScheduleTime()" style="margin-top: 0.8rem; width: 100%; background: #3b82f6;">
+                    Save New Time
+                </button>
+            </div>
             <div class="modal-footer">
                 <button onclick="toggleBrandModal()">Cancel</button>
                 <button class="btn-primary" onclick="createBrand()">Create Brand</button>
@@ -105,17 +111,11 @@
     
             <div id="editTimeBox" class="hidden" style="margin-top: 1.5rem; padding: 1rem; background: #f0f7ff; border: 1px solid #3b82f6; border-radius: 8px;">
                 <label style="color: #3b82f6; font-weight: 700; display: block; margin-bottom: 0.5rem;">
-                    <i class="ph-bold ph-pencil-simple"></i> EDIT POST
+                    <i class="ph-bold ph-clock-afternoon"></i> RESCHEDULE POST
                 </label>
-                
-                <label id="lblEditImage" style="display:block; font-size: 0.9rem; margin-bottom: 0.2rem; margin-top: 0.5rem;"><strong>Replace Image (Optional)</strong></label>
-                <input type="file" id="editDesignUpload" accept="image/png, image/jpeg" style="margin-bottom: 1rem;">
-                
-                <label style="display:block; font-size: 0.9rem; margin-bottom: 0.2rem;"><strong>Reschedule Date</strong></label>
                 <input type="datetime-local" id="editScheduleDate" style="width: 100%; margin-bottom: 0.8rem;">
-                
-                <button class="btn-primary" onclick="updatePostDetails()" style="width: 100%; background: #3b82f6; justify-content: center;">
-                    Save Changes
+                <button class="btn-primary" onclick="updateScheduleTime()" style="width: 100%; background: #3b82f6;">
+                    Update Time
                 </button>
             </div>
     
@@ -131,4 +131,7 @@
     <script src="script.js"></script>
 </body>
 </html>
+
+
+
 
