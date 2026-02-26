@@ -155,21 +155,32 @@ function openPostDetails(event) {
     const editTimeBox = document.getElementById('editTimeBox');
     const editScheduleInput = document.getElementById('editScheduleDate');
 
-    // UPDATED: Check for both Approved and Published
+// UPDATED: Check for both Approved and Published
     if (p.status === 'Approved' || p.status === 'Published') {
         uploadArea.classList.add('hidden');
         btnApprove.classList.add('hidden');
         editTimeBox.classList.remove('hidden');
         editScheduleInput.value = dateString;
+        
+        // Reset the edit file input
+        const editImageInput = document.getElementById('editDesignUpload');
+        const lblEditImage = document.getElementById('lblEditImage');
+        if(editImageInput) {
+            editImageInput.value = "";
+            if (p.status === 'Published') {
+                editImageInput.style.display = 'none';
+                lblEditImage.style.display = 'none';
+            } else {
+                editImageInput.style.display = 'block';
+                lblEditImage.style.display = 'block';
+            }
+        }
     } else {
         uploadArea.classList.remove('hidden');
         btnApprove.classList.remove('hidden');
         editTimeBox.classList.add('hidden');
         document.getElementById('scheduleDate').value = dateString;
     }
-    
-    // 5. Finally, show the modal
-    document.getElementById('viewModal').classList.remove('hidden');
 }
 async function approveAndQueue() {
     const fileInput = document.getElementById('designUpload');
@@ -293,31 +304,73 @@ async function deleteBrand() {
     }
 }
 
-// --- NEW: Reschedule Function ---
-// --- NEW: Reschedule Function ---
-async function updateScheduleTime() {
+async function updatePostDetails() {
     const newDateInput = document.getElementById('editScheduleDate').value;
+    const newFileInput = document.getElementById('editDesignUpload');
+    
     if(!newDateInput) return alert("Please select a date and time.");
+    const exactLocalTime = newDateInput.length === 16 ? newDateInput + ":00" : newDateInput;
 
     try {
-        const exactLocalTime = newDateInput.length === 16 ? newDateInput + ":00" : newDateInput;
+        if (newFileInput.files && newFileInput.files[0]) {
+            const file = newFileInput.files[0];
+            const reader = new FileReader();
 
-        const res = await fetch(`${API_BASE}/posts/${activePostId}/schedule`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                scheduled_date: exactLocalTime 
-            })
-        });
-        
-        if (!res.ok) throw new Error("Failed to update schedule.");
-        
-        closeViewModal();
-        refreshCalendar(); 
-        alert("Post time has been successfully updated!");
+            reader.onloadend = async () => {
+                const img = new Image();
+                img.src = reader.result;
+                img.onload = async () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1080;
+                    let scaleSize = 1;
+                    if (img.width > MAX_WIDTH) scaleSize = MAX_WIDTH / img.width;
+                    
+                    canvas.width = img.width * scaleSize;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+                    const res = await fetch(`${API_BASE}/posts/${activePostId}/approve`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            image_base64: compressedBase64,
+                            scheduled_date: exactLocalTime
+                        })
+                    });
+                    
+                    if (!res.ok) throw new Error("Failed to update post with new image.");
+                    
+                    finishPostUpdate("Post image and time successfully updated!");
+                };
+            };
+            reader.readAsDataURL(file);
+        } else {
+            const res = await fetch(`${API_BASE}/posts/${activePostId}/schedule`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    scheduled_date: exactLocalTime 
+                })
+            });
+            
+            if (!res.ok) throw new Error("Failed to update schedule.");
+            
+            finishPostUpdate("Post time has been successfully updated!");
+        }
     } catch (e) {
-        alert("Error updating time: " + e.message);
+        alert("Error updating post: " + e.message);
     }
+}
+
+function finishPostUpdate(message) {
+    closeViewModal();
+    refreshCalendar(); 
+    alert(message);
+    const editInput = document.getElementById('editDesignUpload');
+    if(editInput) editInput.value = "";
 }
 // --- NEW: Copy AI Prompt Function ---
 function copyAutomatedPrompt() {
@@ -336,6 +389,7 @@ function copyAutomatedPrompt() {
         alert("Failed to copy to clipboard.");
     });
 }
+
 
 
 
