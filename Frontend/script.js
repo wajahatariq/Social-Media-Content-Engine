@@ -83,7 +83,8 @@ async function refreshCalendar() {
             id: p._id,
             title: p.topic,
             start: cleanDate, 
-            backgroundColor: p.status === 'Approved' ? '#10b981' : '#3b82f6',
+            // UPDATED: Check for both Approved and Published
+            backgroundColor: (p.status === 'Approved' || p.status === 'Published') ? '#10b981' : '#3b82f6',
             extendedProps: p
         };
     });
@@ -147,12 +148,15 @@ function openPostDetails(event) {
     localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
     const dateString = localDate.toISOString().slice(0, 16);
 
+    // ... (rest of the openPostDetails code above) ...
+
     const uploadArea = document.getElementById('uploadArea');
     const btnApprove = document.getElementById('btnApprove');
     const editTimeBox = document.getElementById('editTimeBox');
     const editScheduleInput = document.getElementById('editScheduleDate');
 
-    if (p.status === 'Approved') {
+    // UPDATED: Check for both Approved and Published
+    if (p.status === 'Approved' || p.status === 'Published') {
         uploadArea.classList.add('hidden');
         btnApprove.classList.add('hidden');
         editTimeBox.classList.remove('hidden');
@@ -332,6 +336,7 @@ function copyAutomatedPrompt() {
         alert("Failed to copy to clipboard.");
     });
 }
+
 
 
 
