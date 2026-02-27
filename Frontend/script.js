@@ -336,3 +336,49 @@ function copyAutomatedPrompt() {
         alert("Failed to copy to clipboard.");
     });
 }
+
+// --- PASTE THIS AT THE VERY BOTTOM OF Frontend/script.js ---
+
+// Store the original function so we do not have to modify it
+const _originalOpenPostDetails = openPostDetails;
+
+// Override with new appended logic
+openPostDetails = function(event) {
+    // 1. Execute your original behavior first
+    _originalOpenPostDetails(event);
+    
+    const postData = event.extendedProps;
+    const modalFooter = document.querySelector('#viewModal .modal-footer');
+    
+    // 2. Clean up any previously injected button to prevent duplicates
+    const oldEditBtn = document.getElementById('btnReuploadDesign');
+    if (oldEditBtn) {
+        oldEditBtn.remove();
+    }
+    
+    // 3. Inject the Re-upload button ONLY if status is exactly 'Approved' (Not Published)
+    if (postData.status === 'Approved') {
+        const reuploadBtn = document.createElement('button');
+        reuploadBtn.id = 'btnReuploadDesign';
+        reuploadBtn.className = 'btn-danger';
+        reuploadBtn.style.marginRight = 'auto'; // Pushes it to the far left of the footer
+        reuploadBtn.innerHTML = '<i class="ph-bold ph-upload-simple"></i> Re-upload Design';
+        
+        reuploadBtn.onclick = function() {
+            // Hide the edit schedule box and reveal the original image upload area
+            document.getElementById('editTimeBox').classList.add('hidden');
+            document.getElementById('uploadArea').classList.remove('hidden');
+            
+            // Show the main submit button again and rename it
+            const btnApprove = document.getElementById('btnApprove');
+            btnApprove.innerHTML = '<i class="ph-bold ph-arrows-clockwise"></i> Overwrite Post';
+            btnApprove.classList.remove('hidden');
+            
+            // Hide this re-upload trigger button
+            reuploadBtn.classList.add('hidden');
+        };
+        
+        // Add the button into the modal footer
+        modalFooter.insertBefore(reuploadBtn, modalFooter.firstChild);
+    }
+};
