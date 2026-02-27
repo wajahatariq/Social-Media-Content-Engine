@@ -88,13 +88,12 @@ async def generate_month(req: AutoMonthRequest):
             scheduled_time = scheduled_time.replace(tzinfo=None)
             raw_visual_direction = post_data.get('visual_idea', '')
 
-            # 4. Construct the automated God-Tier Prompt
             ai_prompt = (
                 f"Generate a highly creative, corporate-style social media post template for '{brand_name}'.\n\n"
                 f"CORE VISUAL CONCEPT: {raw_visual_direction}\n\n"
-                f"CREATIVE DIRECTION (CRITICAL): Do not use 3D renders, photorealism, or cluttered illustrative scenes. "
-                f"Focus on a sleek, modern 2D graphic design aesthetic. You must explore fresh vector compositions, clean geometric layouts, and imaginative visual metaphors specifically tailored to the core concept above. "
-                f"The artwork must look entirely distinct and unique compared to previous posts, using creative element placement to stand out.\n\n"
+                f"CREATIVE DIRECTION (CRITICAL): Dynamically analyze the 'CORE VISUAL CONCEPT' to determine the most effective visual approach. "
+                f"Create a rich, multi-layered composition by seamlessly blending modern, abstract 2D geometric elements with high-quality, real-world photographic integration or sleek 3D accents. "
+                f"The layout must look like a premium, professionally designed social media template, using creative framing, depth, and dynamic element placement to make the specific topic stand out.\n\n"
                 f"NON-NEGOTIABLE BRANDING RULES:\n"
                 f"1. HEADING TEXT: You MUST seamlessly integrate a punchy 6-7 word heading into the visual design. Make the typography bold, professional, and easy to read.\n"
                 f"2. COLOR SCHEME: Match the color palette exactly to the '{brand_name}' logo provided in this chat.\n"
@@ -220,4 +219,5 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "error", "error": str(e)})
 
     return {"processed": len(results), "details": results}
+
 
