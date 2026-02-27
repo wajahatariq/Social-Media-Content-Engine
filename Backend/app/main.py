@@ -82,6 +82,12 @@ async def generate_month(req: AutoMonthRequest):
         # 3. SINGLE LOOP: Process and Save
         for i, post_data in enumerate(generated_posts):
             if i >= 12: break # Failsafe
+
+            # Extract data from the AI-generated post content
+            topic = post_data.get('topic', 'Brand Highlight')
+            caption = post_data.get('caption', '')
+            raw_visual_direction = post_data.get('visual_idea', '')
+
             
             # Calculate the specific date for this post
             scheduled_time = base_date + timedelta(days=day_offsets[i])
@@ -90,12 +96,14 @@ async def generate_month(req: AutoMonthRequest):
 
             ai_prompt = (
                 f"Generate a highly creative, corporate-style social media post template for '{brand_name}'.\n\n"
+                f"SPECIFIC TOPIC: {topic}\n"
+                f"POST CONTEXT: {caption}\n\n"
                 f"CORE VISUAL CONCEPT: {raw_visual_direction}\n\n"
-                f"CREATIVE DIRECTION (CRITICAL): Dynamically analyze the 'CORE VISUAL CONCEPT' to determine the most effective visual approach. "
+                f"CREATIVE DIRECTION (CRITICAL): Dynamically analyze the 'SPECIFIC TOPIC' and 'CORE VISUAL CONCEPT' to determine the most effective visual approach. "
                 f"Create a rich, multi-layered composition by seamlessly blending modern, abstract 2D geometric elements with high-quality, real-world photographic integration or sleek 3D accents. "
-                f"The layout must look like a premium, professionally designed social media template, using creative framing, depth, and dynamic element placement to make the specific topic stand out.\n\n"
+                f"The layout must look like a premium, professionally designed social media template, using creative framing, depth, and dynamic element placement to make the topic '{topic}' stand out.\n\n"
                 f"NON-NEGOTIABLE BRANDING RULES:\n"
-                f"1. HEADING TEXT: You MUST seamlessly integrate a punchy 6-7 word heading into the visual design. Make the typography bold, professional, and easy to read.\n"
+                f"1. HEADING TEXT: You MUST seamlessly integrate the text '{topic}' into the visual design as a punchy heading. Make the typography bold, professional, and easy to read.\n"
                 f"2. COLOR SCHEME: Match the color palette exactly to the '{brand_name}' logo provided in this chat.\n"
                 f"3. LOGO PLACEMENT: Place the official '{brand_name}' logo clearly in the top right corner.\n"
                 f"4. WEBSITE PLACEMENT: Render the website text '{website}' with flawless typography perfectly centered at the bottom.\n"
@@ -219,5 +227,6 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "error", "error": str(e)})
 
     return {"processed": len(results), "details": results}
+
 
 
