@@ -103,13 +103,13 @@ async def generate_month(req: AutoMonthRequest):
                 f"Create a rich, multi-layered composition by seamlessly blending modern, abstract 2D geometric elements with high-quality, real-world photographic integration or sleek 3D accents. "
                 f"The layout must look like a premium, professionally designed social media template, using creative framing, depth, and dynamic element placement to make the topic '{topic}' stand out.\n\n"
                 f"NON-NEGOTIABLE BRANDING RULES:\n"
-                f"1. HEADING TEXT: You MUST seamlessly integrate the text '{topic}' into the visual design as a punchy heading. Make the typography bold, professional, and easy to read.\n"
+                f"1. HEADING TEXT: You MUST seamlessly integrate the text '{topic}' into the visual design as a punchy heading. Make the typography bold, professional, and easy to read. Render this text EXACTLY ONCE.\n"
                 f"2. COLOR SCHEME: Match the color palette exactly to the '{brand_name}' logo provided in this chat.\n"
                 f"3. LOGO PLACEMENT: Place the official '{brand_name}' logo clearly in the top right corner.\n"
-                f"4. WEBSITE PLACEMENT: Render the website text '{website}' and phone number with flawless typography perfectly centered at the bottom.\n"
+                f"4. FOOTER PLACEMENT (CRITICAL TEXT LIMIT): Render the website text '{website}' and the phone number with flawless typography perfectly centered at the bottom. You are STRICTLY FORBIDDEN from rendering this information more than once. Do not duplicate the website or phone number anywhere else in the composition.\n"
                 f"5. STRICT NO USE OF HASHTAGS: Don't use hashtags extracted from {topic}.\n"
-                f"6. Use effective text but just don't clutter the text. It will make the post messy\n"
-                f"6. BRAND VIBE: The overarching aesthetic must be sleek, corporate, and professional while remaining highly creative.\n\n"
+                f"6. TEXT MINIMALISM: Use effective text but do not clutter the layout. A messy post with excess text elements will be rejected.\n"
+                f"7. BRAND VIBE: The overarching aesthetic must be sleek, corporate, and professional while remaining highly creative.\n\n"
                 f"Post Size: 1080x1080"
             )
 
@@ -229,6 +229,7 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "error", "error": str(e)})
 
     return {"processed": len(results), "details": results}
+
 
 
 
