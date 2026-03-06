@@ -77,7 +77,7 @@ async def generate_month(req: AutoMonthRequest):
         brand_name = brand.get("name", "the brand")
         website = brand.get("website", f"www.{brand_name.replace(' ', '').lower()}.com")
         design_theme = brand.get("design_theme", "Corporate and Professional")
-        
+        phone_number = brand.get("phone_number", "") # <--- EXTRACT PHONE NUMBER
         saved_posts = []
         
         # 3. SINGLE LOOP: Process and Save
@@ -108,7 +108,7 @@ async def generate_month(req: AutoMonthRequest):
                 f"Ensure the lighting highlights the focal points and the styling reflects the specific vibe of this theme.\n\n"
                 f"**Typography & Text Integration:**\n"
                 f"1. MAIN HEADING: Integrate the text '{topic}' seamlessly into the composition as a bold, punchy, professional heading. Render this text EXACTLY ONCE.\n"
-                f"2. FOOTER PLACEMENT: Render the website '{website}' and the phone number with flawless, perfectly centered typography at the very bottom. You are STRICTLY FORBIDDEN from rendering this information more than once.\n"
+                f"2. FOOTER PLACEMENT: Render the website '{website}' and the {phone_number} with flawless, perfectly centered typography at the very bottom. You are STRICTLY FORBIDDEN from rendering this information more than once.\n"
                 f"3. TEXT MINIMALISM: Zero clutter. Do NOT place hashtags anywhere on the visual design itself.\n\n"
                 f"**Branding Constraints:**\n"
                 f"1. COLOR PALETTE: Match the lighting, accents, and structural elements exactly to the '{brand_name}' brand colors.\n"
@@ -233,6 +233,7 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "error", "error": str(e)})
 
     return {"processed": len(results), "details": results}
+
 
 
 
