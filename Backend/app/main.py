@@ -96,24 +96,25 @@ async def generate_month(req: AutoMonthRequest):
             raw_visual_direction = post_data.get('visual_idea', '')
 
             ai_prompt = (
-                f"Generate a highly creative, corporate-style social media post template for '{brand_name}'.\n\n"
-                f"SPECIFIC TOPIC: {topic}\n"
-                f"POST CONTEXT: {caption}\n\n"
-                f"CORE VISUAL CONCEPT: {raw_visual_direction}\n\n"
-                f"BRAND DESIGN THEME (CRITICAL): {design_theme}\n\n"
-                f"CREATIVE DIRECTION: Dynamically analyze the 'SPECIFIC TOPIC' and 'CORE VISUAL CONCEPT' to determine the most effective visual approach. "
-                f"Create a rich, multi-layered composition. "
-                f"The layout must look like a premium, professionally designed social media template, using creative framing, depth, and dynamic element placement to make the topic '{topic}' stand out. "
-                f"Crucially, the overall style, mood, and visual aesthetic MUST strictly adhere to the BRAND DESIGN THEME: '{design_theme}'.\n\n"
-                f"NON-NEGOTIABLE BRANDING RULES:\n"
-                f"1. HEADING TEXT: You MUST seamlessly integrate the text '{topic}' into the visual design as a punchy heading. Make the typography bold, professional, and easy to read. Render this text EXACTLY ONCE.\n"
-                f"2. COLOR SCHEME: Match the color palette exactly to the '{brand_name}' logo provided in this chat.\n"
-                f"3. LOGO PLACEMENT: Place the official '{brand_name}' logo clearly in the top right corner.\n"
-                f"4. FOOTER PLACEMENT (CRITICAL TEXT LIMIT): Render the website text '{website}' and the phone number with flawless typography perfectly centered at the bottom. You are STRICTLY FORBIDDEN from rendering this information more than once. Do not duplicate the website or phone number anywhere else in the composition.\n"
-                f"5. STRICT NO USE OF HASHTAGS: Don't use hashtags extracted from {topic}.\n"
-                f"6. TEXT MINIMALISM: Use effective text but do not clutter the layout. A messy post with excess text elements will be rejected.\n"
-                f"7. BRAND VIBE: The overarching aesthetic must align with the requested design theme.\n\n"
-                f"Post Size: 1080x1080"
+                f"**EXACT IMAGE GENERATION PROMPT & DESIGN BRIEF**\n\n"
+                f"**Subject & Concept:**\n"
+                f"Create a high-end, professionally designed social media graphic for '{brand_name}'. "
+                f"The core visual concept is: {raw_visual_direction}. "
+                f"This must be a completely original design from scratch, not simply an altered version of previous posts. "
+                f"It must feature a unique layout, composition, and visual hierarchy, with an entirely distinct positioning of elements. "
+                f"Explore fresh shapes, framing, and dynamic depth to ensure the design stands alone as a completely fresh creation with no visual dependency on earlier graphics.\n\n"
+                f"**Art Style & Aesthetic (CRITICAL):**\n"
+                f"The entire mood, lighting, and aesthetic must be strictly anchored in the following design theme: '{design_theme}'. "
+                f"Ensure the lighting highlights the focal points and the styling reflects the specific vibe of this theme.\n\n"
+                f"**Typography & Text Integration:**\n"
+                f"1. MAIN HEADING: Integrate the text '{topic}' seamlessly into the composition as a bold, punchy, professional heading. Render this text EXACTLY ONCE.\n"
+                f"2. FOOTER PLACEMENT: Render the website '{website}' and the phone number with flawless, perfectly centered typography at the very bottom. You are STRICTLY FORBIDDEN from rendering this information more than once.\n"
+                f"3. TEXT MINIMALISM: Zero clutter. Do NOT place hashtags anywhere on the visual design itself.\n\n"
+                f"**Branding Constraints:**\n"
+                f"1. COLOR PALETTE: Match the lighting, accents, and structural elements exactly to the '{brand_name}' brand colors.\n"
+                f"2. LOGO: Ensure perfect framing for the official '{brand_name}' logo to sit clearly in the top right corner.\n\n"
+                f"**Technical Specs:**\n"
+                f"Aspect Ratio: 1:1 (1080x1080), hyper-detailed, premium corporate social media template quality."
             )
 
             # 5. Create the post object
@@ -232,6 +233,7 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "error", "error": str(e)})
 
     return {"processed": len(results), "details": results}
+
 
 
 
