@@ -1,19 +1,31 @@
 import os
 import json
+import random
 from langchain_groq import ChatGroq
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
 
 tavily = TavilySearchResults(max_results=3)
 llm = ChatGroq(
-    temperature=0.7, 
+    temperature=0.8, 
     model_name="llama-3.3-70b-versatile", 
     api_key=os.getenv("GROQ_API_KEY")
 )
 
 async def generate_monthly_calendar(brand_data):
-    # 1. Research phase
-    query = f"latest trends and news in {brand_data['industry']} industry"
+    # 1. Research phase with Dynamic Angles
+    angles = [
+        "biggest myths and misconceptions",
+        "unconventional strategies and bold opinions",
+        "hidden secrets and insider tips",
+        "future predictions and upcoming shifts",
+        "biggest mistakes clients make",
+        "behind the scenes and process breakdowns",
+        "advanced strategies and deep dives"
+    ]
+    chosen_angle = random.choice(angles)
+    query = f"{chosen_angle} in {brand_data['industry']} industry"
+    
     try:
         results = tavily.invoke(query)
         research_context = "\n".join([f"- {r['content']}" for r in results])
@@ -25,15 +37,21 @@ async def generate_monthly_calendar(brand_data):
     You are the Chief Content Officer for {brand_data['name']} ({brand_data['industry']}).
     Your task is to generate a 1-Month Social Media Calendar containing exactly 12 posts.
     
-    Industry Research to inspire topics: 
+    Industry Research to inspire topics (Current Focus Angle: {chosen_angle}): 
     {research_context}
     
-    For each of the 12 posts, you must invent a unique, specific 'topic' and write a caption. 
+    STRICT TOPIC RULES:
+    - NEVER use boring, generic topics like "Trends in...", "AI in...", or "Importance of...".
+    - Each of the 12 posts must be highly unique, engaging, and dynamic.
+    - Use diverse content pillars: bold opinions, deep-dive tips, myth-busting, client success frameworks, or unconventional advice.
+    - Invent a unique, highly specific 'topic' for each post.
+    
+    For each of the 12 posts, you must invent this unique 'topic' and write a caption. 
     
     CAPTION RULES (STRICT):
     - NO EMOJIS anywhere.
-    - No "-" this mark
-    - Line 1-2: 3-4 punchy sentences related to the topic with supporting statement
+    - No "-" this mark anywhere.
+    - Line 1 to 2: 3 to 4 punchy sentences related to the topic with a supporting statement.
     - Line 3: (Leave this line empty)
     - Line 4: [Creative CTA phrase]: {brand_data['phone_number']}
     - Line 5: [Creative CTA phrase]: {brand_data['website']}
@@ -45,7 +63,7 @@ async def generate_monthly_calendar(brand_data):
         {{
             "topic": "Name of the specific topic",
             "visual_idea": "Description of what the graphic designer should draw/create.",
-            "caption": "Line 1\\nLine 2\\n\\nCall today: +1 123-4567\\nVisit us: www.site.com\\n\\n#Tag1 #Tag2"
+            "caption": "Line 1\\nLine 2\\n\\nCall today: +1 123 4567\\nVisit us: www.site.com\\n\\n#Tag1 #Tag2"
         }},
         ... (11 more)
     ]
@@ -56,11 +74,10 @@ async def generate_monthly_calendar(brand_data):
     try:
         clean_json = response.content.replace("```json", "").replace("```", "").strip()
         posts = json.loads(clean_json)
-        # Ensure it's a list
+        # Ensure it is a list
         if not isinstance(posts, list):
             raise ValueError("AI did not return a list")
         return posts[:12] # Guarantee we only take 12
     except Exception as e:
         print(f"JSON Parsing Error: {e}")
         return {"error": "Failed to generate monthly calendar properly."}
-
