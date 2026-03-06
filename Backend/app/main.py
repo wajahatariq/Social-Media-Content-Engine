@@ -100,9 +100,11 @@ async def generate_month(req: AutoMonthRequest):
                 f"SPECIFIC TOPIC: {topic}\n"
                 f"POST CONTEXT: {caption}\n\n"
                 f"CORE VISUAL CONCEPT: {raw_visual_direction}\n\n"
-                f"CREATIVE DIRECTION (CRITICAL): Dynamically analyze the 'SPECIFIC TOPIC' and 'CORE VISUAL CONCEPT' to determine the most effective visual approach. "
-                f"Create a rich, multi-layered composition by seamlessly blending modern, abstract 2D geometric elements with high-quality, real-world photographic integration or sleek 3D accents. "
-                f"The layout must look like a premium, professionally designed social media template, using creative framing, depth, and dynamic element placement to make the topic '{topic}' stand out.\n\n"
+                f"BRAND DESIGN THEME (CRITICAL): {design_theme}\n\n"
+                f"CREATIVE DIRECTION: Dynamically analyze the 'SPECIFIC TOPIC' and 'CORE VISUAL CONCEPT' to determine the most effective visual approach. "
+                f"Create a rich, multi-layered composition. "
+                f"The layout must look like a premium, professionally designed social media template, using creative framing, depth, and dynamic element placement to make the topic '{topic}' stand out. "
+                f"Crucially, the overall style, mood, and visual aesthetic MUST strictly adhere to the BRAND DESIGN THEME: '{design_theme}'.\n\n"
                 f"NON-NEGOTIABLE BRANDING RULES:\n"
                 f"1. HEADING TEXT: You MUST seamlessly integrate the text '{topic}' into the visual design as a punchy heading. Make the typography bold, professional, and easy to read. Render this text EXACTLY ONCE.\n"
                 f"2. COLOR SCHEME: Match the color palette exactly to the '{brand_name}' logo provided in this chat.\n"
@@ -110,7 +112,7 @@ async def generate_month(req: AutoMonthRequest):
                 f"4. FOOTER PLACEMENT (CRITICAL TEXT LIMIT): Render the website text '{website}' and the phone number with flawless typography perfectly centered at the bottom. You are STRICTLY FORBIDDEN from rendering this information more than once. Do not duplicate the website or phone number anywhere else in the composition.\n"
                 f"5. STRICT NO USE OF HASHTAGS: Don't use hashtags extracted from {topic}.\n"
                 f"6. TEXT MINIMALISM: Use effective text but do not clutter the layout. A messy post with excess text elements will be rejected.\n"
-                f"7. BRAND VIBE: The overarching aesthetic must be sleek, corporate, and professional while remaining highly creative.\n\n"
+                f"7. BRAND VIBE: The overarching aesthetic must align with the requested design theme.\n\n"
                 f"Post Size: 1080x1080"
             )
 
@@ -230,6 +232,7 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "error", "error": str(e)})
 
     return {"processed": len(results), "details": results}
+
 
 
 
