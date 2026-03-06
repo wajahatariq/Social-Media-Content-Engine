@@ -11,6 +11,7 @@ class Brand(BaseModel):
     website: str = ""        # <--- Added = ""
     phone_number: str = ""   # <--- Added = ""
     tone_voice: str = "Professional"
+    design_theme: str = ""
     facebook_page_id: Optional[str] = None
     facebook_access_token: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now)
@@ -38,6 +39,7 @@ class ApproveUpload(BaseModel):
 
 class AutoMonthRequest(BaseModel):
     brand_id: str
+
 
 
 
