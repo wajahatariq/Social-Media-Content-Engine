@@ -76,6 +76,7 @@ async def generate_month(req: AutoMonthRequest):
         
         brand_name = brand.get("name", "the brand")
         website = brand.get("website", f"www.{brand_name.replace(' ', '').lower()}.com")
+        design_theme = brand.get("design_theme", "Corporate and Professional")
         
         saved_posts = []
         
@@ -229,6 +230,7 @@ async def auto_publish_posts():
                 results.append({"post_id": str(post["_id"]), "status": "error", "error": str(e)})
 
     return {"processed": len(results), "details": results}
+
 
 
 
