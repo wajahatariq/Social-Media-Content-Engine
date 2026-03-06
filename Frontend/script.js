@@ -254,6 +254,7 @@ async function createBrand() {
     const data = {
         name: document.getElementById('newBrandName').value,
         industry: document.getElementById('newBrandIndustry').value,
+        design_theme: document.getElementById('newBrandTheme').value, // <--- NEW DATA FIELD
         website: document.getElementById('newBrandWebsite').value,
         phone_number: document.getElementById('newBrandPhone').value,
         facebook_page_id: document.getElementById('newBrandFbPageId').value,
@@ -382,3 +383,4 @@ openPostDetails = function(event) {
         modalFooter.insertBefore(reuploadBtn, modalFooter.firstChild);
     }
 };
+
