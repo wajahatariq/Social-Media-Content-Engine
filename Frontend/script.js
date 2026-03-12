@@ -384,3 +384,43 @@ openPostDetails = function(event) {
     }
 };
 
+async function deletePost() {
+    if (!activePostId) return;
+    if (confirm("Are you sure you want to delete this specific post?")) {
+        try {
+            const res = await fetch(`${API_BASE}/posts/${activePostId}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) throw new Error("Failed to delete post.");
+            
+            closeViewModal();
+            refreshCalendar();
+            alert("Post deleted successfully.");
+        } catch (e) {
+            alert("Error deleting post: " + e.message);
+        }
+    }
+}
+
+// Wrap openPostDetails again to inject the Delete button into the modal
+(function() {
+    const existingDetails = openPostDetails;
+    openPostDetails = function(event) {
+        existingDetails(event);
+        
+        const footer = document.querySelector('#viewModal .modal-footer');
+        
+        // Ensure the Delete button is only added once
+        if (!document.getElementById('btnDeletePost')) {
+            const btn = document.createElement('button');
+            btn.id = 'btnDeletePost';
+            btn.className = 'btn-danger';
+            btn.style.marginRight = '10px';
+            btn.innerHTML = '<i class="ph-bold ph-trash"></i> Delete Post';
+            btn.onclick = deletePost;
+            
+            // Insert at the beginning of the footer
+            footer.insertBefore(btn, footer.firstChild);
+        }
+    };
+})();
