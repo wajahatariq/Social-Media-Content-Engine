@@ -234,11 +234,13 @@ async def auto_publish_posts():
 
     return {"processed": len(results), "details": results}
 
-
-
-
-
-
-
-
-
+@app.delete("/api/posts/{post_id}")
+async def delete_post(post_id: str):
+    try:
+        from bson import ObjectId
+        res = await db.posts.delete_one({"_id": ObjectId(post_id)})
+        if res.deleted_count == 0:
+            raise HTTPException(404, "Post not found")
+        return {"status": "Post deleted successfully"}
+    except Exception as e:
+        raise HTTPException(500, str(e))
